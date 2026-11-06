@@ -1,19 +1,15 @@
-{% extends 'base.html' %}{% block content %}
-<div class="login-grid">
-<section>
-<p class="eyebrow">MENOS FILAS, MÁS TIEMPO</p>
-<h1>Tu llegada,<br>más sencilla.</h1>
-<p class="intro">Reserva tu espacio según tu horario de clases y consulta la disponibilidad de los tres parqueos.</p>
-<div class="note">Prototipo para revisión del equipo<br>
-<strong>Reservas · Accesos · Disponibilidad</strong>
-</div>
-</section>
+{% extends 'base.html' %}
+{% load static %}
+{% block topbar %}{% endblock %}
+{% block content %}
 <section class="card login">
-<p class="eyebrow">BIENVENIDO</p>
-<h2>Ingresar al sistema</h2>
-<p>Utiliza tu cuenta de demostración.</p>
-<form method="post">{% csrf_token %}{{ form.as_p }}{% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}<button>Ingresar →</button>
-</form>
+  <div class="brand login-brand"><img class="logo" src="{% static 'parking/logo.png' %}" alt="" width="36" height="36">Parqueos <small>ULACIT</small></div>
+  <h1>Iniciar sesión</h1>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <button>Ingresar</button>
+  </form>
 </section>
-</div>
 {% endblock %}

@@ -1,24 +1,30 @@
-{% load static %}<!DOCTYPE html>
+{% load static %}
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% block title %}Parqueos ULACIT
-{% endblock %}</title>
-<link rel="stylesheet" href="{% static 'parking/style.css' %}">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Parqueos ULACIT{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{% static 'parking/logo.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'parking/logo.png' %}">
+  <link rel="stylesheet" href="{% static 'parking/style.css' %}?v=4">
 </head>
 <body>
-<header>
-<a class="brand" href="{% url 'dashboard' %}">
-<span class="logo">P</span> Parqueos <small>ULACIT</small>
-</a>{% if user.is_authenticated %}<nav>
-<a href="{% url 'dashboard' %}">Mi espacio</a>{% if user.is_staff %}<a href="{% url 'access' %}">Control de acceso</a>{% endif %}<span>{{ user.username }}</span>
-<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="quiet">Salir</button>
-</form>
-</nav>{% endif %}</header>
-<main>{% for message in messages %}<div class="message {{ message.tags }}" role="status">{{ message }}</div>{% endfor %}{% block content %}
-
-{% endblock %}</main>
-<footer>Gestión de parqueos · Prototipo académico · ULACIT</footer>{% block scripts %}
-{% endblock %}</body>
+  {% block topbar %}<header class="app-bar">
+    <a class="brand" href="{% url 'dashboard' %}"><img class="logo" src="{% static 'parking/logo.png' %}" alt="" width="36" height="36">Parqueos <small>ULACIT</small></a>
+    {% if user.is_authenticated %}
+    <nav aria-label="Navegación principal">
+      <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>Reservas</a>
+      {% if user.is_staff %}<a href="{% url 'access' %}" {% if request.resolver_match.url_name == 'access' %}aria-current="page"{% endif %}>Control de acceso</a>{% endif %}
+      <span class="username">{{ user.username }}</span>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="quiet">Salir</button></form>
+    </nav>
+    {% endif %}
+  </header>{% endblock %}
+  <main>
+    {% for message in messages %}<div class="message {{ message.tags }}" role="status">{{ message }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
 </html>

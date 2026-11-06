@@ -1,11 +1,8 @@
 {% extends 'base.html' %}{% block content %}
 <div class="heading">
 <div>
-<p class="eyebrow">CONSOLA DEL OFICIAL</p>
 <h1>Control de acceso</h1>
-<p>Verifica la placa y registra cada movimiento.</p>
 </div>
-<span class="tag">Personal autorizado</span>
 </div>
 <form class="search" method="get">
 <label for="plate">Buscar placa</label>
@@ -36,11 +33,11 @@
 <span class="badge {{ reservation.status }}">{{ reservation.get_status_display }}</span>
 </td>
 <td>
-<form method="post" action="{% if reservation.status == 'confirmed' %}{% url 'movement' reservation.pk 'entry' %}{% else %}{% url 'movement' reservation.pk 'exit' %}{% endif %}">{% csrf_token %}<button>{% if reservation.status == 'confirmed' %}Registrar ingreso{% else %}Registrar salida{% endif %}</button>
+<form method="post" action="{% if reservation.status == 'confirmed' %}{% url 'movement' reservation.pk 'entry' %}{% else %}{% url 'movement' reservation.pk 'exit' %}{% endif %}">{% csrf_token %}<button>{% if reservation.status == 'confirmed' %}Ingreso{% else %}Salida{% endif %}</button>
 </form>
 </td>
 </tr>{% empty %}<tr>
-<td colspan="5" class="empty">No hay reservas activas para esta búsqueda.</td>
+<td colspan="5" class="empty">Sin reservas activas.</td>
 </tr>{% endfor %}</tbody>
 </table>
 </div>
