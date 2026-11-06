@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block topbar %}{% endblock %}
+{% block content %}
+<section class="card login">
+  <div class="brand login-brand"><img class="logo" src="{% static 'parking/logo.png' %}" alt="" width="36" height="36">Parqueos <small>ULACIT</small></div>
+  <h1>Iniciar sesión</h1>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <button>Ingresar</button>
+  </form>
+</section>
+{% endblock %}

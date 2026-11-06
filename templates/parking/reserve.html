@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<a class="back" href="{% url 'dashboard' %}">← Reservas</a>
+<div class="heading"><h1>Nueva reserva</h1></div>
+<section class="card reservation-form">
+  <p class="form-help">Selecciona un horario dentro de tus clases. Horas de Costa Rica.</p>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div class="form-actions"><button>Confirmar reserva</button><a class="button secondary" href="{% url 'dashboard' %}">Cancelar</a></div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'base.html' %}{% block content %}
+<div class="heading">
+<div>
+<h1>Reservas</h1>
+</div>
+<a class="button" href="{% url 'reserve' %}">Nueva reserva</a>
+</div>
+<section aria-label="Disponibilidad" id="availability" data-url="{% url 'availability' %}">
+<div class="section-heading">
+<h2>Disponibilidad actual</h2>
+<span class="live">Actualizado <span id="updated">
+</span>
+</span>
+</div>
+<div class="lots">{% for lot in lots %}<article class="card lot">
+<h3>{{ lot.name }}</h3>
+<div class="number" data-free="{{ forloop.counter0 }}">{{ lot.free }}</div>
+<p>espacios libres de {{ lot.capacity }}</p>
+<div class="meter">
+<span style="width: {% widthratio lot.occupied lot.capacity 100 %}%" data-meter="{{ forloop.counter0 }}">
+</span>
+</div>
+<small data-occupied="{{ forloop.counter0 }}">{{ lot.occupied }} vehículos en parqueo</small>
+</article>{% empty %}<p>No hay parqueos registrados.</p>{% endfor %}</div>
+</section>
+<div class="section-heading">
+<h2>Mis reservas</h2>
+<span>Últimas 30 reservas</span>
+</div>
+<div class="card table-wrap">
+<table>
+<thead>
+<tr>
+<th>Placa / parqueo</th>
+<th>Fecha y horario</th>
+<th>Estado</th>
+<th>Acción</th>
+</tr>
+</thead>
+<tbody>{% for reservation in reservations %}<tr>
+<td>
+<strong>{{ reservation.plate }}</strong>
+<br>
+<small>{{ reservation.parking_lot }}</small>
+</td>
+<td>{{ reservation.starts_at|date:'d M Y · H:i' }} – {{ reservation.ends_at|date:'H:i' }}</td>
+<td>
+<span class="badge {{ reservation.status }}">{{ reservation.get_status_display }}</span>
+</td>
+<td>{% if reservation.status == 'confirmed' %}<form method="post" action="{% url 'cancel' reservation.pk %}">{% csrf_token %}<button class="quiet">Cancelar</button>
+</form>{% else %}—{% endif %}</td>
+</tr>{% empty %}<tr>
+<td colspan="4" class="empty">No tienes reservas.</td>
+</tr>{% endfor %}</tbody>
+</table>
+</div>
+<section class="schedules">
+<h2>Horarios de clases</h2>
+{% for schedule in schedules %}<div class="schedule">
+<strong>{{ schedule.course }}</strong>
+<span>{{ schedule.starts_at|date:'d M · H:i' }} – {{ schedule.ends_at|date:'H:i' }}</span>
+</div>{% empty %}<p>No hay horarios registrados.</p>{% endfor %}</section>
+{% endblock %}{% block scripts %}{% load static %}<script src="{% static 'parking/availability.js' %}" defer>
+</script>
+{% endblock %}
