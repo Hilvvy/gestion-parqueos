@@ -149,7 +149,10 @@ p{
   border-radius:8px;
   background:#6643c5;
   color:white;
-  font:600 13px/1.5 inherit;
+  font-family:inherit;
+  font-size:13px;
+  font-weight:600;
+  line-height:1.5;
   padding:11px 18px;
   cursor:pointer;
   white-space:nowrap;
