@@ -36,7 +36,7 @@ Para administrar usuarios, capacidades y horarios: ejecuta `python manage.py cre
 .\.venv\Scripts\python manage.py makemigrations --check --dry-run
 ```
 
-GitHub Actions ejecuta estos controles en cada push y pull request. El workflow está preparado; se ejecutará remotamente cuando el código se suba a GitHub. Las pruebas usan una base aislada de la demo y verifican reglas de negocio, permisos y flujos HTTP.
+GitHub Actions ejecuta estos controles en cada push y pull request. El workflow se ejecuta al subir cambios a GitHub y al abrir un pull request. Las pruebas usan una base aislada de la demo y verifican reglas de negocio, permisos y flujos HTTP.
 
 Validación local inicial: 31 pruebas aprobadas, Ruff y formato correctos, comprobaciones de Django sin errores y migraciones al día. El servidor respondió HTTP 200 para el acceso y los estilos. La revisión visual en navegador queda pendiente.
 
@@ -55,7 +55,7 @@ Una sola app de dominio es suficiente para este alcance. Los modelos encapsulan 
 
 | Elemento | Funcionalidad disponible | Pendiente |
 | --- | --- | --- |
-| TT-01 | Repositorio local, entorno, README, pruebas y CI | Docker Compose, SQL Server y ejecución remota de Actions |
+| TT-01 | Repositorio local, entorno, README, pruebas y CI | Docker Compose y SQL Server |
 | HU-01 / RF-01 | Reserva dentro de clases, placa sin traslapes y cancelación | QR y modificación de citas |
 | HU-02 / RF-02 | Capacidad por intervalo y reserva transaccional | Prueba concurrente, carga y asignación por tipo de usuario |
 | HU-04 / RF-04 | Búsqueda por placa, ingreso/salida y registro de hora y oficial de ingreso | QR, tolerancia configurable y accesos excepcionales |
