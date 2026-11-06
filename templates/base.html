@@ -1,0 +1,24 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Parqueos ULACIT
+{% endblock %}</title>
+<link rel="stylesheet" href="{% static 'parking/style.css' %}">
+</head>
+<body>
+<header>
+<a class="brand" href="{% url 'dashboard' %}">
+<span class="logo">P</span> Parqueos <small>ULACIT</small>
+</a>{% if user.is_authenticated %}<nav>
+<a href="{% url 'dashboard' %}">Mi espacio</a>{% if user.is_staff %}<a href="{% url 'access' %}">Control de acceso</a>{% endif %}<span>{{ user.username }}</span>
+<form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="quiet">Salir</button>
+</form>
+</nav>{% endif %}</header>
+<main>{% for message in messages %}<div class="message {{ message.tags }}" role="status">{{ message }}</div>{% endfor %}{% block content %}
+
+{% endblock %}</main>
+<footer>Gestión de parqueos · Prototipo académico · ULACIT</footer>{% block scripts %}
+{% endblock %}</body>
+</html>
