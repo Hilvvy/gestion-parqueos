@@ -20,9 +20,11 @@ urlpatterns = [
     path("materias/<int:pk>/retirar/", subject_views.retire_subject, name="retire_subject"),
     path("reportes/", views.reports, name="reports"),
     path("reportes.csv", views.report_csv, name="report_csv"),
+    path("reportes.xlsx", views.report_excel, name="report_excel"),
     path("auditoria/", views.audit_log, name="audit"),
     path("indicadores/", views.indicators, name="indicators"),
     path("gestion/usuarios/", management_views.accounts, name="manage_accounts"),
+    path("gestion/", management_views.dashboard, name="manage_dashboard"),
     path("gestion/usuarios/nuevo/", management_views.account_edit, name="manage_account_create"),
     path("gestion/usuarios/<int:pk>/", management_views.account_edit, name="manage_account_edit"),
     path(

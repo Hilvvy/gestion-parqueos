@@ -15,6 +15,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
 from .administration import ProfileService
+from .excel_reports import reservation_workbook
 from .forms import (
     IntervalForm,
     MonthForm,
@@ -365,6 +366,20 @@ def report_csv(request):
                 csv_cell(row.exit_officer.username if row.exit_officer else ""),
             ]
         )
+    return response
+
+
+@permission_required("parking.view_operational_report", raise_exception=True)
+@never_cache
+def report_excel(request):
+    form, rows = report_data(request)
+    if not form.is_valid():
+        return HttpResponse("Filtros inválidos.", status=400, content_type="text/plain")
+    response = HttpResponse(
+        reservation_workbook(rows, form.cleaned_data),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = 'attachment; filename="reservas.xlsx"'
     return response
 
 

@@ -35,7 +35,7 @@ def account_data(**changes):
         "username": "newperson",
         "first_name": "Andrea",
         "last_name": "Demo",
-        "email": "person@example.test",
+        "email": "person@ulacit.ed.cr",
         "password": "Q8!sZp4x-2026",
         "role": "student",
         "national_id": "TEST-101",
@@ -149,7 +149,7 @@ def test_duplicate_identity_rolls_back_new_user(manager):
     AdministrationService.save_account(actor=manager, data=account_data())
     with pytest.raises(ValidationError):
         AdministrationService.save_account(
-            actor=manager, data=account_data(username="duplicate", email="second@example.test")
+            actor=manager, data=account_data(username="duplicate", email="second@ulacit.ed.cr")
         )
     assert not get_user_model().objects.filter(username="duplicate").exists()
 
@@ -204,7 +204,7 @@ def test_extended_profile_and_identity_lock(client, scenario):
     data = {
         "first_name": "Andrea",
         "last_name": "Gómez",
-        "email": "demo@example.test",
+        "email": "demo@ulacit.ed.cr",
         "details-national_id": "TEST-STUDENT",
         "details-birth_date": "2001-01-01",
         "details-career": "Informática",

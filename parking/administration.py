@@ -18,13 +18,14 @@ from .models import (
     UserProfile,
 )
 from .permissions import can_manage, configure_roles
+from .validators import institutional_email
 
 PROFILE_FIELDS = ("national_id", "birth_date", "career", "shift", "work_start", "work_end")
 ACCOUNT_FIELDS = ("username", "first_name", "last_name", "email")
 
 
 def validate_email_ownership(user):
-    user.email = user.email.strip().lower()
+    user.email = institutional_email(user.email)
     if (
         user.email
         and get_user_model().objects.filter(email__iexact=user.email).exclude(pk=user.pk).exists()

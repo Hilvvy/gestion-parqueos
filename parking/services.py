@@ -5,6 +5,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import F, Q
 from django.utils import timezone
 
+from .booking_rules import validate_booking_window
 from .capacity import peak_occupancy
 from .models import AuditEvent, ClassSchedule, ParkingLot, ParkingPolicy, Reservation, Vehicle
 from .permissions import permitted_lots
@@ -87,10 +88,7 @@ class ReservationService:
         cls.expire_no_shows()
         if purpose not in Reservation.Purpose.values:
             raise ValidationError("Motivo de reserva inválido.")
-        if starts_at >= ends_at:
-            raise ValidationError("La hora final debe ser posterior a la inicial.")
-        if starts_at <= timezone.now():
-            raise ValidationError("La reserva debe iniciar en el futuro.")
+        validate_booking_window(starts_at, ends_at)
         if not ClassSchedule.objects.filter(
             user=user, active=True, starts_at__lte=starts_at, ends_at__gte=ends_at
         ).exists():

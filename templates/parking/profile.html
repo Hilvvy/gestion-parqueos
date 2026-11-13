@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="heading"><h1>Mi perfil</h1></div>
-<section class="card reservation-form"><p class="form-help">Usuario: {{ user.username }}</p><form method="post">{% csrf_token %}{{ form.as_p }}{{ profile_form.as_p }}<button>Guardar cambios</button></form>
+<section class="card reservation-form"><p class="form-help">Correo: {{ user.email }}</p><form method="post">{% csrf_token %}{{ form.as_p }}{{ profile_form.as_p }}<button>Guardar cambios</button></form>
 {% if details.shift %}<dl><dt>Jornada</dt><dd>{{ details.get_shift_display }}</dd><dt>Horario</dt><dd>{{ details.work_start|time:'H:i' }} – {{ details.work_end|time:'H:i' }}</dd></dl>{% endif %}</section>
 {% endblock %}

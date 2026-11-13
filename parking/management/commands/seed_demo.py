@@ -45,9 +45,18 @@ class Command(BaseCommand):
             if created:
                 user.set_password(password)
                 user.save()
-            if not user.email:
-                user.email = f"{username}@parqueos.example"
+            emails = {
+                "estudiante": "schinchillad502@ulacit.ed.cr",
+                "oficial": "seguridad.demo@ulacit.ed.cr",
+                "administrador": "administracion.demo@ulacit.ed.cr",
+            }
+            if not user.email or user.email.endswith("@parqueos.example"):
+                user.email = emails[username]
                 user.save(update_fields=["email"])
+            if username == "estudiante" and not user.first_name:
+                user.first_name = "Steven"
+                user.last_name = "Chinchilla Delgado"
+                user.save(update_fields=["first_name", "last_name"])
             profile, _ = UserProfile.objects.get_or_create(user=user)
             if not profile.career and username == "estudiante":
                 profile.career = "Ingeniería Informática"

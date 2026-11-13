@@ -1,6 +1,17 @@
 import re
 
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+
+INSTITUTIONAL_DOMAIN = "ulacit.ed.cr"
+
+
+def institutional_email(value):
+    value = value.strip().lower()
+    validate_email(value)
+    if value.rsplit("@", 1)[-1] != INSTITUTIONAL_DOMAIN:
+        raise ValidationError("Utiliza tu correo institucional @ulacit.ed.cr.")
+    return value
 
 
 def normalize_plate(plate):

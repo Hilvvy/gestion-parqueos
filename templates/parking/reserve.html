@@ -4,7 +4,7 @@
 <div class="heading"><h1>Nueva reserva</h1></div>
 <section class="card reservation-form">
   {% if has_vehicles %}
-  <p class="form-help">El horario debe quedar dentro de tus clases. Horas de Costa Rica.</p>
+  <p class="form-help">Reserva hasta 48 horas antes, dentro de tus clases. Horas de Costa Rica.</p>
   <form method="post" id="reservation-form" data-recommendation-url="{% url 'recommendation' %}">{% csrf_token %}{{ form.as_p }}<p id="recommendation" class="form-help" aria-live="polite"></p><div class="form-actions"><button>Confirmar reserva</button><a class="button secondary" href="{% url 'dashboard' %}">Cancelar</a></div></form>
   {% else %}<p>Registra un vehículo para reservar.</p><a class="button" href="{% url 'vehicles' %}">Registrar vehículo</a>{% endif %}
 </section>
