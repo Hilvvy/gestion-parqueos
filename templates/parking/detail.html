@@ -7,6 +7,7 @@
     <h2>{{ reservation.plate }}</h2>
     <dl>
       <dt>Parqueo</dt><dd>{{ reservation.parking_lot }}</dd>
+      <dt>Motivo</dt><dd>{{ reservation.get_purpose_display }}</dd>
       <dt>Desde</dt><dd>{{ reservation.starts_at|date:'d/m/Y H:i' }}</dd>
       <dt>Hasta</dt><dd>{{ reservation.ends_at|date:'d/m/Y H:i' }}</dd>
       <dt>Límite de ingreso</dt><dd>{{ reservation.entry_deadline|date:'d/m/Y H:i' }}</dd>

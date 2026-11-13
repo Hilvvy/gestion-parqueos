@@ -51,7 +51,11 @@ def book(person):
     try:
         barrier.wait(timeout=10)
         ReservationService.reserve(
-            user=user, vehicle=vehicle, parking_lot=lot, starts_at=start, ends_at=end
+            user=user,
+            vehicle=vehicle,
+            parking_lot=None if os.getenv("AUTO_ASSIGN") == "1" else lot,
+            starts_at=start,
+            ends_at=end,
         )
         return "confirmed"
     except ValidationError as error:

@@ -6,7 +6,7 @@ import segno
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
 from django.core.exceptions import ValidationError
-from django.db import OperationalError, transaction
+from django.db import IntegrityError, OperationalError
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -14,10 +14,26 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
-from .forms import ProfileForm, ReportFilterForm, ReservationForm, VehicleForm
-from .models import AuditEvent, ClassSchedule, Reservation, Vehicle
+from .administration import ProfileService
+from .forms import (
+    IntervalForm,
+    MonthForm,
+    ProfileForm,
+    ReportFilterForm,
+    ReservationForm,
+    UserProfileForm,
+    VehicleForm,
+)
+from .models import AuditEvent, ClassSchedule, Reservation, UserProfile, Vehicle
 from .permissions import is_security, permitted_lots
-from .queries import availability_rows, filter_report, visible_reservations
+from .queries import (
+    availability_rows,
+    filter_report,
+    interval_recommendations,
+    monthly_summary,
+    operational_alerts,
+    visible_reservations,
+)
 from .services import ReservationService, VehicleService
 
 
@@ -36,7 +52,7 @@ def dashboard(request):
             .order_by("starts_at")
             .first(),
             "schedules": ClassSchedule.objects.filter(
-                user=request.user, ends_at__gt=timezone.now()
+                user=request.user, active=True, ends_at__gt=timezone.now()
             ),
         },
     )
@@ -127,6 +143,7 @@ def access_console(request):
             "reservations": reservations[:50],
             "search": query,
             "assignments": permitted_lots(request.user),
+            "alerts": operational_alerts(request.user),
         },
     )
 
@@ -190,15 +207,85 @@ def retire_vehicle(request, pk):
 
 
 @login_required
+@never_cache
 def profile(request):
+    details, _ = UserProfile.objects.get_or_create(user=request.user)
     form = ProfileForm(request.POST or None, instance=request.user)
-    if request.method == "POST" and form.is_valid():
-        with transaction.atomic():
-            form.save()
-            AuditEvent.objects.create(actor=request.user, action=AuditEvent.Action.PROFILE_UPDATED)
-        messages.success(request, "Perfil actualizado.")
-        return redirect("profile")
-    return render(request, "parking/profile.html", {"form": form})
+    profile_form = UserProfileForm(request.POST or None, instance=details, prefix="details")
+    if request.method == "POST" and form.is_valid() and profile_form.is_valid():
+        try:
+            ProfileService.update(
+                actor=request.user,
+                account_data=form.cleaned_data,
+                profile_data=profile_form.cleaned_data,
+            )
+        except ValidationError as error:
+            for message in error.messages:
+                profile_form.add_error(None, message)
+        except IntegrityError:
+            profile_form.add_error(None, "La cédula ya está registrada.")
+        else:
+            messages.success(request, "Perfil actualizado.")
+            return redirect("profile")
+    return render(
+        request,
+        "parking/profile.html",
+        {"form": form, "profile_form": profile_form, "details": details},
+    )
+
+
+@login_required
+def recommendation(request):
+    form = IntervalForm(request.GET)
+    if not form.is_valid():
+        return JsonResponse({"error": "Selecciona fecha y hora inicial/final válidas."}, status=400)
+    start, end = form.cleaned_data["starts_at"], form.cleaned_data["ends_at"]
+    if not ClassSchedule.objects.filter(
+        user=request.user, active=True, starts_at__lte=start, ends_at__gte=end
+    ).exists():
+        return JsonResponse({"error": "El intervalo debe quedar dentro de tus clases."}, status=400)
+    options = interval_recommendations(start, end)
+    return JsonResponse(
+        {"recommended": options[0] if options and options[0]["free"] > 0 else None, "lots": options}
+    )
+
+
+@user_passes_test(is_security)
+@never_cache
+def alerts_data(request):
+    alerts = operational_alerts(request.user)
+
+    def serialize(rows):
+        return [
+            {
+                "plate": row.plate,
+                "parking_lot": row.parking_lot.name,
+                "starts_at": row.starts_at.isoformat(),
+                "entry_deadline": row.entry_deadline.isoformat() if row.entry_deadline else None,
+            }
+            for row in rows
+        ]
+
+    return JsonResponse(
+        {
+            "upcoming_count": alerts["upcoming_count"],
+            "pending_count": alerts["pending_count"],
+            "upcoming": serialize(alerts["upcoming"]),
+            "pending": serialize(alerts["pending"]),
+            "updated_at": alerts["updated_at"],
+        }
+    )
+
+
+@permission_required("parking.view_operational_report", raise_exception=True)
+@never_cache
+def indicators(request):
+    value = request.GET or {"month": timezone.localdate().strftime("%Y-%m")}
+    form = MonthForm(value)
+    summary = (
+        monthly_summary(form.cleaned_data["month"].replace(day=1)) if form.is_valid() else None
+    )
+    return render(request, "parking/indicators.html", {"form": form, "summary": summary})
 
 
 def report_data(request):
@@ -248,6 +335,7 @@ def report_csv(request):
             "Placa",
             "Usuario",
             "Parqueo",
+            "Motivo",
             "Inicio",
             "Fin",
             "Estado",
@@ -267,6 +355,7 @@ def report_csv(request):
                 csv_cell(row.plate),
                 csv_cell(row.user.username),
                 csv_cell(row.parking_lot.name),
+                row.get_purpose_display(),
                 date_text(row.starts_at),
                 date_text(row.ends_at),
                 row.get_status_display(),

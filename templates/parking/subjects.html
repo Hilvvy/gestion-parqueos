@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="heading"><h1>Materias{% if target.pk != user.pk %} · {{ target.username }}{% endif %}</h1></div>
+<div class="split-layout">
+<section><div class="card table-wrap"><table><thead><tr><th>Materia</th><th>Horario semanal</th><th>Acción</th></tr></thead>
+<tbody>{% for subject in subjects %}<tr><td>{{ subject.name }}<br><small>{{ subject.first_date|date:'d/m/Y' }} · {{ subject.weeks }} semanas</small><br><small>{% if subject.registered_by_id == subject.user_id %}Autodeclarado{% else %}Registrado por Administración{% endif %}</small></td><td>{{ subject.get_weekday_display }}<br>{{ subject.start_time|time:'H:i' }} – {{ subject.end_time|time:'H:i' }}</td><td><form method="post" action="{% url 'retire_subject' subject.pk %}">{% csrf_token %}<button class="quiet">Retirar</button></form></td></tr>{% empty %}<tr><td colspan="3" class="empty">Sin materias semanales.</td></tr>{% endfor %}</tbody></table></div>
+<h2 class="section-title">Próximas clases</h2>{% for schedule in schedules %}<div class="schedule"><span>{{ schedule.course }}</span><span>{{ schedule.starts_at|date:'d/m H:i' }} – {{ schedule.ends_at|date:'H:i' }}</span></div>{% empty %}<p>No hay clases registradas.</p>{% endfor %}
+</section>
+<section class="card"><h2>Registrar materia</h2><p class="form-help">Se generan las clases de cada semana. Los horarios autodeclarados son datos de demostración.</p><form method="post">{% csrf_token %}{{ form.as_p }}<button>Registrar</button></form></section>
+</div>
+{% endblock %}

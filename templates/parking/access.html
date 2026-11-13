@@ -1,7 +1,8 @@
-{% extends 'base.html' %}
+{% extends 'base.html' %}{% load static %}
 {% block content %}
 <div class="heading"><h1>Control de acceso</h1></div>
 <p class="form-help">Parqueos asignados: {% for lot in assignments %}{{ lot.name }}{% if not forloop.last %}, {% endif %}{% empty %}ninguno{% endfor %}</p>
+<section class="card security-alerts" id="security-alerts" data-url="{% url 'alerts_data' %}"><div class="section-heading"><h2>Alertas de llegada</h2><small id="alerts-updated">{{ alerts.updated_at }}</small></div><div class="alert-counts"><span><strong id="upcoming-count">{{ alerts.upcoming_count }}</strong> en los próximos 30 min</span><span><strong id="pending-count">{{ alerts.pending_count }}</strong> pendientes de ingreso</span></div><ul id="arrival-list">{% for row in alerts.pending %}<li>{{ row.plate }} · {{ row.parking_lot }} · ingreso hasta {{ row.entry_deadline|date:'H:i' }}</li>{% endfor %}{% for row in alerts.upcoming %}<li>{{ row.plate }} · {{ row.parking_lot }} · llega {{ row.starts_at|date:'H:i' }}</li>{% endfor %}</ul></section>
 <form class="search" method="get"><label for="search">Placa o código</label><input id="search" name="search" value="{{ search }}"><button>Buscar</button><a href="{% url 'access' %}">Ver todas</a></form>
 <div class="card table-wrap"><table>
   <thead><tr><th>Vehículo</th><th>Parqueo</th><th>Horario</th><th>Estado</th><th>Movimiento</th></tr></thead>
@@ -13,3 +14,5 @@
   </tr>{% empty %}<tr><td colspan="5" class="empty">Sin reservas activas.</td></tr>{% endfor %}</tbody>
 </table></div>
 {% endblock %}
+
+{% block scripts %}<script src="{% static 'parking/security-alerts.js' %}" defer></script>{% endblock %}

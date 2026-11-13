@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="heading"><h1>Parqueos</h1><a class="button" href="{% url 'manage_lot_create' %}">Crear parqueo</a></div>
+<section class="card table-wrap"><table><thead><tr><th>Parqueo</th><th>Capacidad</th><th>Estado</th><th>Acción</th></tr></thead>
+<tbody>{% for lot in lots %}<tr><td>{{ lot.name }}</td><td>{{ lot.capacity }}</td><td>{% if lot.active %}Activo{% else %}Inactivo{% endif %}</td><td><a href="{% url 'manage_lot_edit' lot.pk %}">Editar</a></td></tr>{% empty %}<tr><td colspan="4" class="empty">Sin parqueos.</td></tr>{% endfor %}</tbody></table></section>
+{% endblock %}

@@ -9,7 +9,7 @@ from django.utils import timezone
 @pytest.mark.django_db(transaction=True)
 def test_existing_reservations_keep_history_and_receive_unique_codes():
     executor = MigrationExecutor(connection)
-    target = [("parking", "0002_parkingpolicy_alter_reservation_options_and_more")]
+    target = executor.loader.graph.leaf_nodes("parking")
     try:
         executor.migrate([("parking", "0001_initial")])
         old = executor.loader.project_state([("parking", "0001_initial")]).apps

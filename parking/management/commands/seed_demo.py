@@ -2,12 +2,18 @@ from datetime import timedelta
 from getpass import getpass
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 
-from parking.models import ClassSchedule, ParkingLot, ParkingPolicy, SecurityAssignment, Vehicle
-from parking.permissions import SECURITY_GROUP
+from parking.models import (
+    ClassSchedule,
+    ParkingLot,
+    ParkingPolicy,
+    SecurityAssignment,
+    UserProfile,
+    Vehicle,
+)
+from parking.permissions import configure_roles
 
 
 class Command(BaseCommand):
@@ -27,14 +33,7 @@ class Command(BaseCommand):
             lot, _ = ParkingLot.objects.get_or_create(name=name, defaults={"capacity": capacity})
             lots.append(lot)
         ParkingPolicy.objects.get_or_create(pk=1)
-        security, _ = Group.objects.get_or_create(name=SECURITY_GROUP)
-        administrators, _ = Group.objects.get_or_create(name="Administración")
-        administrators.permissions.add(
-            *Permission.objects.filter(
-                content_type__app_label="parking",
-                codename__in=["view_operational_report", "view_auditevent"],
-            )
-        )
+        security, administrators = configure_roles()
         for username in ("estudiante", "oficial", "administrador"):
             user, created = get_user_model().objects.get_or_create(
                 username=username,
@@ -46,6 +45,19 @@ class Command(BaseCommand):
             if created:
                 user.set_password(password)
                 user.save()
+            if not user.email:
+                user.email = f"{username}@parqueos.example"
+                user.save(update_fields=["email"])
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+            if not profile.career and username == "estudiante":
+                profile.career = "Ingeniería Informática"
+            if username == "oficial" and not profile.shift:
+                from datetime import time
+
+                profile.shift = UserProfile.Shift.MIXED
+                profile.work_start = time(14, 0)
+                profile.work_end = time(22, 0)
+            profile.save()
             if username == "oficial":
                 user.groups.add(security)
                 for lot in lots:

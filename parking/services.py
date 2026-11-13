@@ -5,6 +5,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import F, Q
 from django.utils import timezone
 
+from .capacity import peak_occupancy
 from .models import AuditEvent, ClassSchedule, ParkingLot, ParkingPolicy, Reservation, Vehicle
 from .permissions import permitted_lots
 from .validators import normalize_plate
@@ -80,19 +81,32 @@ class ReservationService:
 
     @classmethod
     @transaction.atomic
-    def reserve(cls, *, user, parking_lot, vehicle, starts_at, ends_at):
+    def reserve(
+        cls, *, user, parking_lot, vehicle, starts_at, ends_at, purpose=Reservation.Purpose.CLASS
+    ):
         cls.expire_no_shows()
+        if purpose not in Reservation.Purpose.values:
+            raise ValidationError("Motivo de reserva inválido.")
         if starts_at >= ends_at:
             raise ValidationError("La hora final debe ser posterior a la inicial.")
         if starts_at <= timezone.now():
             raise ValidationError("La reserva debe iniciar en el futuro.")
         if not ClassSchedule.objects.filter(
-            user=user, starts_at__lte=starts_at, ends_at__gte=ends_at
+            user=user, active=True, starts_at__lte=starts_at, ends_at__gte=ends_at
         ).exists():
             raise ValidationError("La reserva debe estar dentro de uno de tus horarios de clases.")
         # SQLite usa BEGIN IMMEDIATE; la fila del parqueo también protege la asignación.
+        if parking_lot is None:
+            from .queries import interval_recommendations
+
+            options = interval_recommendations(starts_at, ends_at)
+            if not options or options[0]["free"] < 1:
+                raise ValidationError("No hay espacios disponibles para esa franja.")
+            parking_lot = ParkingLot.objects.get(pk=options[0]["id"])
         ParkingLot.objects.filter(pk=parking_lot.pk).update(revision=F("revision") + 1)
         parking_lot = ParkingLot.objects.select_for_update().get(pk=parking_lot.pk)
+        if not parking_lot.active:
+            raise ValidationError("El parqueo no está disponible.")
         vehicle = Vehicle.objects.filter(pk=vehicle.pk, owner=user, active=True).first()
         if not vehicle:
             raise ValidationError("Selecciona uno de tus vehículos activos.")
@@ -101,16 +115,9 @@ class ReservationService:
         )
         if overlapping.filter(plate=vehicle.plate).exists():
             raise ValidationError("Este vehículo ya tiene una reserva en ese horario.")
-        events = []
-        for start, end in overlapping.filter(parking_lot=parking_lot).values_list(
-            "starts_at", "ends_at"
-        ):
-            events.extend([(max(start, starts_at), 1), (min(end, ends_at), -1)])
-        occupied = 0
-        for _, change in sorted(events):
-            occupied += change
-            if occupied >= parking_lot.capacity:
-                raise ValidationError("El parqueo no tiene espacios para esa franja.")
+        intervals = overlapping.filter(parking_lot=parking_lot).values_list("starts_at", "ends_at")
+        if peak_occupancy(intervals, starts_at, ends_at) >= parking_lot.capacity:
+            raise ValidationError("El parqueo no tiene espacios para esa franja.")
         policy, _ = ParkingPolicy.objects.get_or_create(pk=1)
         deadline = min(ends_at, starts_at + timedelta(minutes=policy.arrival_tolerance_minutes))
         reservation = Reservation.objects.create(
@@ -118,6 +125,7 @@ class ReservationService:
             parking_lot=parking_lot,
             vehicle=vehicle,
             plate=vehicle.plate,
+            purpose=purpose,
             starts_at=starts_at,
             ends_at=ends_at,
             entry_deadline=deadline,

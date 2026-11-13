@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="heading"><h1>Usuarios</h1><a class="button" href="{% url 'manage_account_create' %}">Crear usuario</a></div>
+<form class="search" method="get"><label for="q">Buscar usuario</label><input id="q" name="q" value="{{ query }}"><button>Buscar</button><a href="{% url 'manage_accounts' %}">Limpiar</a></form>
+<section class="card table-wrap"><table>
+<thead><tr><th>Usuario</th><th>Nombre / correo</th><th>Rol</th><th>Estado</th><th>Acciones</th></tr></thead>
+<tbody>{% for account in page %}<tr>
+<td>{{ account.username }}</td><td>{{ account.get_full_name|default:'—' }}<br><small>{{ account.email|default:'—' }}</small></td>
+<td>{{ account.role_label }}</td><td><span class="badge {% if account.is_active %}inside{% else %}cancelled{% endif %}">{% if account.is_active %}Activo{% else %}Inactivo{% endif %}</span></td>
+<td>{% if not account.is_superuser or user.is_superuser %}<div class="row-actions"><a href="{% url 'manage_account_edit' account.pk %}">Editar</a><a href="{% url 'manage_subjects' account.pk %}">Materias</a>{% if account.pk != user.pk %}<form method="post" action="{% url 'manage_account_toggle' account.pk %}">{% csrf_token %}<button class="quiet">{% if account.is_active %}Desactivar{% else %}Activar{% endif %}</button></form>{% endif %}</div>{% endif %}</td>
+</tr>{% empty %}<tr><td colspan="5" class="empty">Sin usuarios.</td></tr>{% endfor %}</tbody>
+</table></section>
+<div class="pagination">{% if page.has_previous %}<a href="?q={{ query|urlencode }}&page={{ page.previous_page_number }}">Anterior</a>{% endif %}<span>{{ page.number }} / {{ page.paginator.num_pages }}</span>{% if page.has_next %}<a href="?q={{ query|urlencode }}&page={{ page.next_page_number }}">Siguiente</a>{% endif %}</div>
+{% endblock %}
