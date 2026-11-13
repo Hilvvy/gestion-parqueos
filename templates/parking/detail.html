@@ -7,6 +7,9 @@
     <h2>{{ reservation.plate }}</h2>
     <dl>
       <dt>Parqueo</dt><dd>{{ reservation.parking_lot }}</dd>
+      <dt>Tipo</dt><dd>{{ reservation.get_kind_display }}</dd>
+      {% if reservation.guest_name %}<dt>Visitante</dt><dd>{{ reservation.guest_name }}</dd>{% endif %}
+      {% if reservation.exception_reason %}<dt>Justificación</dt><dd>{{ reservation.exception_reason }}</dd>{% endif %}
       <dt>Motivo</dt><dd>{{ reservation.get_purpose_display }}</dd>
       <dt>Desde</dt><dd>{{ reservation.starts_at|date:'d/m/Y H:i' }}</dd>
       <dt>Hasta</dt><dd>{{ reservation.ends_at|date:'d/m/Y H:i' }}</dd>

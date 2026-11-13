@@ -126,14 +126,36 @@ Vuelve a ejecutar `seed_demo` en el entorno demo para agregar roles, asignacione
 | TT-02 | Organización y decisiones descritas en README | Diagramas y ADR formales |
 | HU-01 | Horario de clases, vehículo sin traslapes, QR local y cancelación | Revisión de aceptación del equipo |
 | HU-02 | Capacidad por intervalo y prueba concurrente del último cupo | Carga y validación al migrar de motor |
-| HU-03 | — | Visitantes autorizados |
-| HU-04 | Placa/código, permisos por parqueo, horario/tolerancia, cupo y auditoría de ingreso/salida | Acceso excepcional y medición del objetivo de 10 segundos |
+| HU-03 | Visitantes autorizados por administración, placa/franja y código/QR compartible | Revisión de aceptación del equipo |
+| HU-04 | Placa/código, permisos, tolerancia, cupo, auditoría e ingreso excepcional justificado; medición local <10 s | Validación en infraestructura institucional |
 | HU-05 | Ocupación física, actualización cada cinco segundos y hora de consulta | Medición de rendimiento institucional |
 | HU-06 | Tolerancia configurable, procesador periódico, estado Vencida, QR inválido y auditoría | Revisión de aceptación y operación del procesador en despliegue |
-| HU-07 | Historial por placa/fechas/estado, permisos, CSV y auditoría | Medición del objetivo de cinco segundos |
-| HU-08 | — | Operación sin conexión y sincronización |
+| HU-07 | Historial filtrado, permisos, CSV/Excel y medición local <5 s | Validación en infraestructura institucional |
+| HU-08 | Consola local, cola persistente, sincronización automática, UUID único y conflictos visibles | Prueba de aceptación con los dispositivos del equipo |
 
-No incluye integración con horarios institucionales, hardware de acceso ni despliegue productivo. Los tiempos máximos de respuesta no se declaran medidos. Las reservas, los parqueos, las materias recurrentes, los vehículos y los eventos son de solo lectura en el admin de Django; las operaciones normales se realizan en las pantallas propias con sus servicios y auditoría.
+No incluye integración con horarios institucionales, hardware de acceso ni despliegue productivo. [Las mediciones locales](docs/validacion-acceso.md) documentan su alcance; no garantizan tiempos en otra infraestructura. Las reservas, los parqueos, las materias recurrentes, los vehículos y los eventos son de solo lectura en el admin de Django; las operaciones normales se realizan en las pantallas propias con sus servicios y auditoría.
+
+## Visitantes, excepciones y desconexión
+
+En **Control de acceso**, Administración puede crear una **Cita de visitante** con nombre, placa, parqueo y franja (inicio hasta 48 horas antes, sin exigir clases). La confirmación muestra el código y QR que el funcionario puede compartir; el visitante no necesita una cuenta. Seguridad valida el código desde su consola autenticada. El QR no concede acceso a los datos privados de la aplicación.
+
+**Ingreso excepcional** requiere un oficial asignado, justificación y salida prevista dentro de 24 horas. Comprueba cupo físico, reservas concurrentes y placa duplicada. El historial y los archivos CSV/Excel incluyen tipo y justificación; el filtro Tipo separa estos ingresos.
+
+Para preparar el modo sin conexión, abre **Control de acceso → Movimientos del dispositivo** con sesión de Seguridad y red disponible. Usa `localhost`, `127.0.0.1` o HTTPS: el navegador necesita service workers e IndexedDB. Conserva localmente hasta 500 citas activas asignadas y la cola de movimientos; no descarga todo el historial. Abre este modo antes de desconectar. También se abre como respaldo al visitar `/acceso/` sin red.
+
+Sin red, los registros son **pendientes de validación**. Se guardan en IndexedDB antes de confirmarlo en pantalla, sobreviven a recargas y se envían en orden al recuperar la conexión (o cada 15 segundos con la página abierta). Conservan hora capturada y UUID; el servidor registra además recepción, resultado y oficial autenticado. Sincroniza dentro de 24 horas y mantén correcto el reloj del dispositivo. Los permisos, cupos y estados se revisan de nuevo; un conflicto queda visible y no se convierte silenciosamente en un ingreso aceptado. Si venció la sesión, vuelve a entrar con la misma cuenta. La sincronización requiere la aplicación abierta.
+
+La cola se separa por cuenta. Cerrar sesión borra la copia de las citas de la consola, conserva los movimientos pendientes para esa cuenta y no los envía con otra identidad. Es almacenamiento local del navegador, sin cifrado adicional: usa un dispositivo controlado por Seguridad. El botón de borrado retira únicamente eventos ya sincronizados; conserva conflictos para revisión del oficial. El modo sin red no crea visitantes ni ingresos excepcionales nuevos.
+
+Pruebas adicionales (bases temporales, no modifican la demo):
+
+```powershell
+node --test scripts/offline-sync.test.cjs
+.\.venv\Scripts\python scripts/benchmark_access.py
+# Opcional: Chrome instalado y dependencias de prueba del navegador
+.\.venv\Scripts\python -m pip install -r requirements-browser.txt
+.\.venv\Scripts\python scripts/check_offline_browser.py
+```
 
 Variables opcionales: `DJANGO_DEBUG`, `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `PARKING_DATABASE_PATH`. `.env.example` documenta las opciones, pero no se carga automáticamente. `runserver` y la clave predeterminada son para desarrollo local.
 

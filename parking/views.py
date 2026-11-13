@@ -344,6 +344,9 @@ def report_csv(request):
             "Oficial ingreso",
             "Salida",
             "Oficial salida",
+            "Tipo",
+            "Visitante",
+            "Justificación",
         ]
     )
 
@@ -364,6 +367,9 @@ def report_csv(request):
                 csv_cell(row.officer.username if row.officer else ""),
                 date_text(row.exited_at),
                 csv_cell(row.exit_officer.username if row.exit_officer else ""),
+                row.get_kind_display(),
+                csv_cell(row.guest_name),
+                csv_cell(row.exception_reason),
             ]
         )
     return response

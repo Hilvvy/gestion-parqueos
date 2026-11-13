@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}
+<a class="back" href="{% url 'access' %}">← Control de acceso</a>
+<div class="heading"><h1>{{ title }}</h1></div>
+<section class="card reservation-form"><form method="post">{% csrf_token %}{{ form.as_p }}<button>Confirmar</button></form></section>
+{% endblock %}

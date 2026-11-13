@@ -1,0 +1,7 @@
+{% load static %}<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Control de acceso</title><link rel="stylesheet" href="{% static 'parking/style.css' %}?v=8"></head>
+<body><main><a href="{% url 'access' %}">← Control de acceso</a><div class="heading"><h1>Movimientos del dispositivo</h1></div>
+<section class="card" id="offline-console"><p id="offline-account"></p><p id="offline-state" role="status"></p><p class="form-help">Los movimientos sin conexión quedan pendientes de validación. Sincroniza antes de 24 horas.</p>
+<label for="offline-search">Placa o código</label><input id="offline-search" autocomplete="off"><div class="table-wrap"><table><thead><tr><th>Placa</th><th>Parqueo / horario</th><th>Movimiento</th></tr></thead><tbody id="offline-rows"></tbody></table></div>
+<h2>Pendientes y conflictos</h2><ul id="offline-pending"></ul><button id="offline-sync">Sincronizar</button><button class="secondary" id="offline-clear">Borrar datos sincronizados del dispositivo</button></section>
+</main><script src="{% static 'parking/offline-store.js' %}" defer></script><script src="{% static 'parking/offline.js' %}" defer></script></body></html>
