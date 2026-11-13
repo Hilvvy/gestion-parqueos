@@ -36,6 +36,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "parking.permissions.navigation",
             ]
         },
     }
@@ -44,8 +45,8 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-        "OPTIONS": {"timeout": 20},
+        "NAME": os.getenv("PARKING_DATABASE_PATH", BASE_DIR / "db.sqlite3"),
+        "OPTIONS": {"timeout": 20, "transaction_mode": "IMMEDIATE"},
     }
 }
 AUTH_PASSWORD_VALIDATORS = [

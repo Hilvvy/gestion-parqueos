@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<a class="back" href="{% url 'dashboard' %}">← Reservas</a>
+<div class="heading"><h1>Confirmación</h1><span class="badge {{ reservation.status }}">{{ reservation.get_status_display }}</span></div>
+<section class="card confirmation">
+  <div class="confirmation-data">
+    <h2>{{ reservation.plate }}</h2>
+    <dl>
+      <dt>Parqueo</dt><dd>{{ reservation.parking_lot }}</dd>
+      <dt>Desde</dt><dd>{{ reservation.starts_at|date:'d/m/Y H:i' }}</dd>
+      <dt>Hasta</dt><dd>{{ reservation.ends_at|date:'d/m/Y H:i' }}</dd>
+      <dt>Límite de ingreso</dt><dd>{{ reservation.entry_deadline|date:'d/m/Y H:i' }}</dd>
+      {% if reservation.entered_at %}<dt>Ingreso</dt><dd>{{ reservation.entered_at|date:'d/m/Y H:i' }}</dd>{% endif %}
+      {% if reservation.exited_at %}<dt>Salida</dt><dd>{{ reservation.exited_at|date:'d/m/Y H:i' }}</dd>{% endif %}
+    </dl>
+    {% if reservation.user_id == user.id and reservation.status == 'confirmed' %}
+    <form method="post" action="{% url 'cancel' reservation.pk %}">{% csrf_token %}<button class="secondary">Cancelar reserva</button></form>
+    {% endif %}
+  </div>
+  <div class="confirmation-code">
+    {% if qr_available %}<img src="{% url 'reservation_qr' reservation.code %}" alt="QR de la reserva" width="220" height="220">{% endif %}
+    <label for="reservation-code">Código de reserva</label><input id="reservation-code" readonly value="{{ reservation.code }}">
+  </div>
+</section>
+{% endblock %}

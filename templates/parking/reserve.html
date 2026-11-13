@@ -3,11 +3,9 @@
 <a class="back" href="{% url 'dashboard' %}">← Reservas</a>
 <div class="heading"><h1>Nueva reserva</h1></div>
 <section class="card reservation-form">
-  <p class="form-help">Selecciona un horario dentro de tus clases. Horas de Costa Rica.</p>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <div class="form-actions"><button>Confirmar reserva</button><a class="button secondary" href="{% url 'dashboard' %}">Cancelar</a></div>
-  </form>
+  {% if has_vehicles %}
+  <p class="form-help">El horario debe quedar dentro de tus clases. Horas de Costa Rica.</p>
+  <form method="post">{% csrf_token %}{{ form.as_p }}<div class="form-actions"><button>Confirmar reserva</button><a class="button secondary" href="{% url 'dashboard' %}">Cancelar</a></div></form>
+  {% else %}<p>Registra un vehículo para reservar.</p><a class="button" href="{% url 'vehicles' %}">Registrar vehículo</a>{% endif %}
 </section>
 {% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="heading"><h1>Historial de accesos</h1><a class="button secondary" href="{% url 'report_csv' %}?{{ query }}">Exportar CSV</a></div>
+<form class="card report-filters" method="get">{{ form.as_p }}<button>Filtrar</button><a href="{% url 'reports' %}">Limpiar</a></form>
+<div class="section-heading"><h2>Reservas y movimientos</h2><span>{{ total }} registros · se muestran hasta 200</span></div>
+<section class="card table-wrap"><table>
+  <thead><tr><th>Placa / usuario</th><th>Parqueo</th><th>Reserva</th><th>Estado</th><th>Ingreso / oficial</th><th>Salida / oficial</th></tr></thead>
+  <tbody>{% for reservation in reservations %}<tr>
+    <td><a href="{% url 'reservation_detail' reservation.code %}">{{ reservation.plate }}</a><br><small>{{ reservation.user.username }}</small></td>
+    <td>{{ reservation.parking_lot }}</td>
+    <td>{{ reservation.starts_at|date:'d/m/Y H:i' }}<br><small>{{ reservation.ends_at|date:'d/m/Y H:i' }}</small></td>
+    <td><span class="badge {{ reservation.status }}">{{ reservation.get_status_display }}</span></td>
+    <td>{{ reservation.entered_at|date:'d/m/Y H:i'|default:'—' }}<br><small>{{ reservation.officer.username|default:'—' }}</small></td>
+    <td>{{ reservation.exited_at|date:'d/m/Y H:i'|default:'—' }}<br><small>{{ reservation.exit_officer.username|default:'—' }}</small></td>
+  </tr>{% empty %}<tr><td colspan="6" class="empty">Sin resultados.</td></tr>{% endfor %}</tbody>
+</table></section>
+{% endblock %}
