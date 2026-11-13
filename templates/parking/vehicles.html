@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="heading"><h1>Mis vehículos</h1></div>
+<div class="split-layout">
+  <section class="card table-wrap"><table>
+    <thead><tr><th>Placa</th><th>Vehículo</th><th>Acción</th></tr></thead>
+    <tbody>{% for vehicle in vehicles %}<tr>
+      <td><strong>{{ vehicle.plate }}</strong><br><small>{{ vehicle.get_kind_display }}</small></td>
+      <td>{{ vehicle.brand }} {{ vehicle.model }}</td>
+      <td><form method="post" action="{% url 'retire_vehicle' vehicle.pk %}">{% csrf_token %}<button class="quiet">Retirar</button></form></td>
+    </tr>{% empty %}<tr><td colspan="3" class="empty">No tienes vehículos registrados.</td></tr>{% endfor %}</tbody>
+  </table></section>
+  <section class="card"><h2>Registrar vehículo</h2><form method="post">{% csrf_token %}{{ form.as_p }}<button>Registrar</button></form></section>
+</div>
+{% endblock %}

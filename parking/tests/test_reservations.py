@@ -2,33 +2,23 @@ from datetime import timedelta
 from unittest.mock import patch
 
 import pytest
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from parking.models import ClassSchedule, ParkingLot, Reservation
-from parking.services import ReservationService
-
-
-@pytest.fixture
-def scenario(db):
-    user = get_user_model().objects.create_user("student", password="testing-password")
-    officer = get_user_model().objects.create_user(
-        "officer", password="testing-password", is_staff=True
-    )
-    lot = ParkingLot.objects.create(name="Norte", capacity=1)
-    start = (timezone.now() + timedelta(days=1)).replace(second=0, microsecond=0)
-    end = start + timedelta(hours=2)
-    ClassSchedule.objects.create(user=user, course="Calidad", starts_at=start, ends_at=end)
-    return dict(
-        user=user, officer=officer, parking_lot=lot, plate="abc123", starts_at=start, ends_at=end
-    )
+from parking.models import ParkingLot, Reservation, Vehicle
+from parking.services import ReservationService, VehicleService
 
 
 def reserve(scenario, **overrides):
-    return ReservationService.reserve(
-        **({k: v for k, v in scenario.items() if k != "officer"} | overrides)
-    )
+    plate = overrides.pop("plate", scenario["plate"])
+    normalized = ReservationService.normalize_plate(plate)
+    vehicle = Vehicle.objects.filter(owner=scenario["user"], plate=normalized, active=True).first()
+    if vehicle is None:
+        vehicle = VehicleService.register(
+            owner=scenario["user"], plate=plate, kind=Vehicle.Kind.CAR, brand="Test"
+        )
+    data = {key: scenario[key] for key in ("user", "parking_lot", "starts_at", "ends_at")}
+    return ReservationService.reserve(**(data | {"vehicle": vehicle} | overrides))
 
 
 def test_reservation_normalizes_plate(scenario):
@@ -176,7 +166,7 @@ def test_booking_through_form(client, scenario):
         "/reservar/",
         {
             "parking_lot": scenario["parking_lot"].pk,
-            "plate": "ABC123",
+            "vehicle": scenario["vehicle"].pk,
             "starts_at": timezone.localtime(scenario["starts_at"]).strftime("%Y-%m-%dT%H:%M"),
             "ends_at": timezone.localtime(scenario["ends_at"]).strftime("%Y-%m-%dT%H:%M"),
         },

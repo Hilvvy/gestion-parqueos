@@ -7,7 +7,7 @@
   <title>{% block title %}Parqueos ULACIT{% endblock %}</title>
   <link rel="icon" type="image/png" href="{% static 'parking/logo.png' %}">
   <link rel="apple-touch-icon" href="{% static 'parking/logo.png' %}">
-  <link rel="stylesheet" href="{% static 'parking/style.css' %}?v=4">
+  <link rel="stylesheet" href="{% static 'parking/style.css' %}?v=5">
 </head>
 <body>
   {% block topbar %}<header class="app-bar">
@@ -15,8 +15,11 @@
     {% if user.is_authenticated %}
     <nav aria-label="Navegación principal">
       <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>Reservas</a>
-      {% if user.is_staff %}<a href="{% url 'access' %}" {% if request.resolver_match.url_name == 'access' %}aria-current="page"{% endif %}>Control de acceso</a>{% endif %}
-      <span class="username">{{ user.username }}</span>
+      {% if can_access %}<a href="{% url 'access' %}" {% if request.resolver_match.url_name == 'access' %}aria-current="page"{% endif %}>Control de acceso</a>{% endif %}
+      <a href="{% url 'vehicles' %}" {% if request.resolver_match.url_name == 'vehicles' %}aria-current="page"{% endif %}>Vehículos</a>
+      {% if perms.parking.view_operational_report %}<a href="{% url 'reports' %}" {% if request.resolver_match.url_name == 'reports' %}aria-current="page"{% endif %}>Reportes</a>{% endif %}
+      {% if perms.parking.view_auditevent %}<a href="{% url 'audit' %}" {% if request.resolver_match.url_name == 'audit' %}aria-current="page"{% endif %}>Auditoría</a>{% endif %}
+      <a href="{% url 'profile' %}" aria-label="Mi perfil" class="username">{{ user.username }}</a>
       <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="quiet">Salir</button></form>
     </nav>
     {% endif %}

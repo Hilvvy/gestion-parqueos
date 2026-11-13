@@ -5,6 +5,7 @@
 </div>
 <a class="button" href="{% url 'reserve' %}">Nueva reserva</a>
 </div>
+{% if next_reservation %}<section class="next-reservation"><div><span class="form-help">Próxima reserva</span><strong>{{ next_reservation.parking_lot }} · {{ next_reservation.plate }}</strong><span>{{ next_reservation.starts_at|date:'d/m H:i' }} · ingreso hasta {{ next_reservation.entry_deadline|date:'H:i' }}</span></div><a href="{% url 'reservation_detail' next_reservation.code %}">Ver confirmación</a></section>{% endif %}
 <section aria-label="Disponibilidad" id="availability" data-url="{% url 'availability' %}">
 <div class="section-heading">
 <h2>Disponibilidad actual</h2>
@@ -39,7 +40,7 @@
 </thead>
 <tbody>{% for reservation in reservations %}<tr>
 <td>
-<strong>{{ reservation.plate }}</strong>
+<a href="{% url 'reservation_detail' reservation.code %}"><strong>{{ reservation.plate }}</strong></a>
 <br>
 <small>{{ reservation.parking_lot }}</small>
 </td>
