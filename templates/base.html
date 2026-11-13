@@ -7,30 +7,35 @@
   <title>{% block title %}Parqueos ULACIT{% endblock %}</title>
   <link rel="icon" type="image/png" href="{% static 'parking/logo.png' %}">
   <link rel="apple-touch-icon" href="{% static 'parking/logo.png' %}">
-  <link rel="stylesheet" href="{% static 'parking/style.css' %}?v=6">
+  <link rel="stylesheet" href="{% static 'parking/style.css' %}?v=7">
 </head>
-<body>
-  {% block topbar %}<header class="app-bar">
+<body class="{% if user.is_authenticated and request.resolver_match.url_name != 'login' %}with-sidebar{% endif %}">
+  {% block topbar %}
+  {% if user.is_authenticated %}
+  <button class="mobile-nav-toggle" id="navigation-toggle" type="button" aria-expanded="false" aria-controls="app-sidebar">☰ Menú</button>
+  <button class="navigation-backdrop" id="navigation-backdrop" type="button" aria-label="Cerrar navegación"></button>
+  <aside class="app-sidebar" id="app-sidebar" aria-label="Navegación principal">
     <a class="brand" href="{% url 'dashboard' %}"><img class="logo" src="{% static 'parking/logo.png' %}" alt="" width="36" height="36">Parqueos <small>ULACIT</small></a>
-    {% if user.is_authenticated %}
-    <nav aria-label="Navegación principal">
+    <nav class="sidebar-nav">
       <a href="{% url 'dashboard' %}" {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>Reservas</a>
-      {% if can_access %}<a href="{% url 'access' %}" {% if request.resolver_match.url_name == 'access' %}aria-current="page"{% endif %}>Control de acceso</a>{% endif %}
       <a href="{% url 'vehicles' %}" {% if request.resolver_match.url_name == 'vehicles' %}aria-current="page"{% endif %}>Vehículos</a>
-      {% if perms.parking.view_operational_report %}<a href="{% url 'reports' %}" {% if request.resolver_match.url_name == 'reports' %}aria-current="page"{% endif %}>Reportes</a>{% endif %}
       <a href="{% url 'subjects' %}" {% if request.resolver_match.url_name == 'subjects' %}aria-current="page"{% endif %}>Materias</a>
-      {% if can_manage %}<a href="{% url 'manage_accounts' %}" {% if '/gestion/' in request.path %}aria-current="page"{% endif %}>Administración</a>{% endif %}
-      <a href="{% url 'profile' %}" aria-label="Mi perfil" class="username">{{ user.username }}</a>
-      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="quiet">Salir</button></form>
+      {% if can_access %}<a href="{% url 'access' %}" {% if request.resolver_match.url_name == 'access' %}aria-current="page"{% endif %}>Control de acceso</a>{% endif %}
+      {% if perms.parking.view_operational_report %}<a href="{% url 'reports' %}" {% if request.resolver_match.url_name == 'reports' or request.resolver_match.url_name == 'indicators' or request.resolver_match.url_name == 'audit' %}aria-current="page"{% endif %}>Reportes</a>{% endif %}
+      {% if can_manage %}<a href="{% url 'manage_dashboard' %}" {% if '/gestion/' in request.path %}aria-current="page"{% endif %}>Administración</a>{% endif %}
+      <a href="{% url 'profile' %}" {% if request.resolver_match.url_name == 'profile' %}aria-current="page"{% endif %}>Mi perfil</a>
     </nav>
-    {% endif %}
-  </header>{% endblock %}
+    <div class="sidebar-account"><span title="{{ user.email }}">{{ user.get_full_name|default:user.email }}</span><small>{{ user.email }}</small><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="quiet">Cerrar sesión</button></form></div>
+  </aside>
+  {% endif %}
+  {% endblock %}
   <main>
-    {% if '/gestion/' in request.path and can_manage %}<nav class="section-tabs" aria-label="Administración"><a href="{% url 'manage_accounts' %}">Usuarios</a><a href="{% url 'manage_lots' %}">Parqueos</a><a href="{% url 'manage_policy' %}">Reglamento</a></nav>{% endif %}
+    {% if '/gestion/' in request.path and can_manage %}<nav class="section-tabs" aria-label="Administración"><a href="{% url 'manage_dashboard' %}">Panel</a><a href="{% url 'manage_accounts' %}">Usuarios</a><a href="{% url 'manage_lots' %}">Parqueos</a><a href="{% url 'manage_policy' %}">Reglamento</a></nav>{% endif %}
     {% if request.resolver_match.url_name == 'reports' or request.resolver_match.url_name == 'indicators' or request.resolver_match.url_name == 'audit' %}<nav class="section-tabs" aria-label="Reportes">{% if perms.parking.view_operational_report %}<a href="{% url 'reports' %}">Historial</a><a href="{% url 'indicators' %}">Indicadores</a>{% endif %}{% if perms.parking.view_auditevent %}<a href="{% url 'audit' %}">Auditoría</a>{% endif %}</nav>{% endif %}
     {% for message in messages %}<div class="message {{ message.tags }}" role="status">{{ message }}</div>{% endfor %}
     {% block content %}{% endblock %}
   </main>
+  {% if user.is_authenticated %}<script src="{% static 'parking/navigation.js' %}" defer></script>{% endif %}
   {% block scripts %}{% endblock %}
 </body>
 </html>

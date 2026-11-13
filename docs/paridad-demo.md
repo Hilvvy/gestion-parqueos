@@ -4,7 +4,7 @@ Referencia funcional: ParqueoU_Demo_v3/ParqueoU_Demo_v1 del equipo. Se mantiene 
 
 | Función de la demo | Implementación grupal |
 | --- | --- |
-| Acceso y roles | Usuario o correo, contraseña protegida, sesiones y CSRF de Django; Estudiante, Seguridad y Administración |
+| Acceso y roles | Correo institucional @ulacit.ed.cr, contraseña protegida, sesiones y CSRF de Django; Estudiante, Seguridad y Administración |
 | Perfil personal y académico | Nombre, apellidos, correo, cédula, nacimiento y carrera. La cédula registrada se cambia por Administración |
 | Perfil del oficial | Jornada, hora inicial/final y parqueos asignados. Admite jornada nocturna que termina al día siguiente |
 | Vehículos | Tipo, placa, marca, modelo y año; registro/retiro, propiedad, historial y reemplazo sin bloquear por registros inactivos |
@@ -21,7 +21,7 @@ Referencia funcional: ParqueoU_Demo_v3/ParqueoU_Demo_v1 del equipo. Se mantiene 
 | Administración de usuarios | Crear/editar, rol, perfiles, asignaciones y activar/desactivar; conserva historial y revoca sesiones de inactivos |
 | Administración de parqueos | Crear/editar capacidad y estado activo; protege ocupación y reservas comprometidas |
 | Reglamento | Tolerancia editable en la app; cada reserva conserva el plazo con que se confirmó |
-| Reportes | Historial por placa/fechas/estado y CSV del mismo conjunto con protección ante fórmulas |
+| Reportes | Historial por placa/fechas/estado y CSV y Excel del mismo conjunto con protección ante fórmulas |
 | Indicadores mensuales | Reservas, cancelaciones, parqueo más solicitado, hora local de mayor demanda y cantidades por estado |
 | Auditoría | Reserva, cancelación, entrada/salida, ausencia, vehículos, perfiles, usuarios, parqueos, materias y reglamento |
 | Ejecución y pruebas | Migraciones, semilla sin borrado, arranque web/procesador, suite aislada y GitHub Actions |
@@ -29,7 +29,7 @@ Referencia funcional: ParqueoU_Demo_v3/ParqueoU_Demo_v1 del equipo. Se mantiene 
 ## Reglas conservadas del proyecto grupal
 
 - Tres parqueos iniciales; se pueden administrar otros desde la app. No se fijan cinco ni 50 espacios obligatorios por parqueo.
-- Reserva dentro de clases activas para todos los motivos. No se incorpora anticipación obligatoria de 12–72 horas ni duración fija de 4/2/3 horas.
+- Reserva dentro de clases activas para todos los motivos y con máximo 48 horas de anticipación al inicio, según la última regla solicitada. No se incorpora un mínimo de 12 horas ni duración fija de 4/2/3 horas.
 - Cancelación antes del inicio, sin requerir una hora de anticipación.
 - Vehículos activos propios, sin imponer el límite no acordado de uno por tipo.
 - Tolerancia inicial demo de 15 minutos, editable por Administración.
@@ -38,3 +38,5 @@ Referencia funcional: ParqueoU_Demo_v3/ParqueoU_Demo_v1 del equipo. Se mantiene 
 La demo recibida solo incluía una tabla y un mensaje para lista de espera, sin flujo implementado; no se declara esa funcionalidad como existente. Ninguna de las dos versiones incluye lector de cámara, acceso sin conexión con sincronización, visitantes autorizados ni hardware. En el proyecto grupal siguen pendientes además Docker/SQL Server y mediciones de rendimiento.
 
 Las pruebas cubren el recorrido estudiante → materia → vehículo → reserva recomendada → QR → ingreso/salida → reportes y auditoría, además de permisos, validaciones, migración y concurrencia.
+
+El panel propio de Administración reúne accesos a creación/edición de usuarios, roles, asignaciones, parqueos, reglamento, indicadores y auditoría. La navegación principal es lateral y se adapta a móvil.

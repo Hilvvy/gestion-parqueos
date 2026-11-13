@@ -327,7 +327,7 @@ def test_profile_cannot_change_role(client, scenario):
         {
             "first_name": "Andrea",
             "last_name": "Gómez",
-            "email": "demo@example.test",
+            "email": "demo@ulacit.ed.cr",
             "is_superuser": "true",
             "is_staff": "true",
         },

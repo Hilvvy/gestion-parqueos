@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="heading"><h1>Historial de accesos</h1><a class="button secondary" href="{% url 'report_csv' %}?{{ query }}">Exportar CSV</a></div>
+<div class="heading"><h1>Historial de accesos</h1><div class="row-actions"><a class="button" href="{% url 'report_excel' %}?{{ query }}">Exportar Excel</a><a class="button secondary" href="{% url 'report_csv' %}?{{ query }}">CSV</a></div></div>
 <form class="card report-filters" method="get">{{ form.as_p }}<button>Filtrar</button><a href="{% url 'reports' %}">Limpiar</a></form>
 <div class="section-heading"><h2>Reservas y movimientos</h2><span>{{ total }} registros · se muestran hasta 200</span></div>
 <section class="card table-wrap"><table>

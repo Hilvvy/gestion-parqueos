@@ -176,3 +176,26 @@ dd { margin: 0; }
 input[type="checkbox"] { width: 18px; min-height: 18px; height: 18px; accent-color: var(--primary); }
 label:has(input[type="checkbox"]) { display: flex; align-items: center; gap: 10px; }
 @media (max-width: 760px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } .section-tabs { flex-wrap: wrap; } }
+
+.app-sidebar { position: fixed; inset: 0 auto 0 0; width: 232px; background: #fff; border-right: 1px solid var(--line); display: flex; flex-direction: column; z-index: 50; }
+.app-sidebar .brand { padding: 24px 16px; gap: 8px; font-size: 17px; }
+.app-sidebar .brand small { font-size: 10px; }
+.app-sidebar .sidebar-nav { display: flex; flex-direction: column; align-self: stretch; gap: 4px; padding: 8px; flex: 1; overflow-y: auto; width: auto; }
+.app-sidebar .sidebar-nav > a { min-height: 44px; padding: 10px 16px; border: 0; border-left: 3px solid transparent; border-radius: 3px; }
+.app-sidebar .sidebar-nav > a[aria-current="page"] { border-left-color: var(--primary); background: #f1eafa; }
+.sidebar-account { padding: 16px; border-top: 1px solid var(--line); }
+.sidebar-account > span, .sidebar-account > small { display: block; overflow-wrap: anywhere; }
+.sidebar-account > span { font-weight: 600; }
+.sidebar-account > small { color: var(--muted); font-size: 11px; margin: 4px 0 12px; }
+.sidebar-account .quiet { padding-left: 0; }
+.with-sidebar main { margin: 0 0 0 232px; max-width: 1440px; padding: 32px; }
+.mobile-nav-toggle, .navigation-backdrop { display: none; }
+@media (max-width: 900px) {
+  .app-sidebar { transform: translateX(-100%); transition: transform .18s ease; }
+  .with-sidebar main { margin: 0; padding: 76px 16px 32px; }
+  .mobile-nav-toggle { display: block; position: fixed; top: 16px; left: 16px; color: var(--primary); background: #fff; border-color: var(--line); z-index: 30; }
+  .navigation-open .app-sidebar { transform: translateX(0); }
+  .navigation-open .navigation-backdrop { display: block; position: fixed; inset: 0; width: 100%; height: 100%; border: 0; background: #0005; z-index: 40; border-radius: 0; }
+  body.navigation-open { overflow: hidden; }
+}
+@media (prefers-reduced-motion: reduce) { .app-sidebar { transition: none; } }

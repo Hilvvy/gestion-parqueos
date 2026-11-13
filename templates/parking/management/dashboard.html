@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="heading"><h1>Administración</h1><a class="button" href="{% url 'manage_account_create' %}">Crear usuario</a></div>
+<section class="metric-grid">
+  <article class="card"><h2>Usuarios activos</h2><strong>{{ active_users }}</strong><a href="{% url 'manage_accounts' %}">Gestionar usuarios</a></article>
+  <article class="card"><h2>Oficiales activos</h2><strong>{{ officers }}</strong><a href="{% url 'manage_accounts' %}">Roles y asignaciones</a></article>
+  <article class="card"><h2>Parqueos activos</h2><strong>{{ active_lots }}</strong><a href="{% url 'manage_lots' %}">Gestionar parqueos</a></article>
+  <article class="card"><h2>Vehículos dentro</h2><strong>{{ inside }}</strong><a href="{% url 'reports' %}">Ver reportes</a></article>
+</section>
+<div class="row-actions"><a class="button secondary" href="{% url 'manage_policy' %}">Reglamento</a><a class="button secondary" href="{% url 'indicators' %}">Indicadores</a><a class="button secondary" href="{% url 'audit' %}">Auditoría</a></div>
+{% endblock %}

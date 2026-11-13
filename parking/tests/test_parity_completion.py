@@ -13,24 +13,24 @@ from parking.tests.test_parity import manager as manager
 from parking.tests.test_reservations import reserve
 
 
-def test_login_accepts_username_and_unique_email(db):
+def test_login_requires_institutional_email(db):
     user = get_user_model().objects.create_user(
-        "student-login", email="person@example.test", password="GoodPassword2026!"
+        "student-login", email="person@ulacit.ed.cr", password="GoodPassword2026!"
     )
-    assert authenticate(username="student-login", password="GoodPassword2026!") == user
-    assert authenticate(username="PERSON@EXAMPLE.TEST", password="GoodPassword2026!") == user
-    assert authenticate(username="person@example.test", password="wrong") is None
+    assert authenticate(username="student-login", password="GoodPassword2026!") is None
+    assert authenticate(username="PERSON@ULACIT.ED.CR", password="GoodPassword2026!") == user
+    assert authenticate(username="person@ulacit.ed.cr", password="wrong") is None
     user.is_active = False
     user.save()
-    assert authenticate(username="person@example.test", password="GoodPassword2026!") is None
+    assert authenticate(username="person@ulacit.ed.cr", password="GoodPassword2026!") is None
 
 
 def test_ambiguous_email_does_not_authenticate(db):
     for username in ("first", "second"):
         get_user_model().objects.create_user(
-            username, email="same@example.test", password="GoodPassword2026!"
+            username, email="same@ulacit.ed.cr", password="GoodPassword2026!"
         )
-    assert authenticate(username="same@example.test", password="GoodPassword2026!") is None
+    assert authenticate(username="same@ulacit.ed.cr", password="GoodPassword2026!") is None
 
 
 def test_custom_user_administration_rejects_duplicate_email(manager):

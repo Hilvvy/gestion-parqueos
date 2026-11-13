@@ -4,7 +4,14 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 
+from .booking_rules import MAX_ADVANCE, validate_booking_window
 from .models import ParkingLot, ParkingPolicy, Reservation, Subject, UserProfile, Vehicle
+from .validators import institutional_email
+
+
+class InstitutionalEmailField(forms.EmailField):
+    def clean(self, value):
+        return institutional_email(super().clean(value))
 
 
 class ReservationForm(forms.Form):
@@ -30,6 +37,15 @@ class ReservationForm(forms.Form):
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["vehicle"].queryset = Vehicle.objects.filter(owner=user, active=True)
+        self.fields["starts_at"].widget.attrs["max"] = timezone.localtime(
+            timezone.now() + MAX_ADVANCE
+        ).strftime("%Y-%m-%dT%H:%M")
+
+    def clean(self):
+        data = super().clean()
+        if data.get("starts_at") and data.get("ends_at"):
+            validate_booking_window(data["starts_at"], data["ends_at"])
+        return data
 
     def clean_purpose(self):
         return self.cleaned_data.get("purpose") or Reservation.Purpose.CLASS
@@ -42,14 +58,22 @@ class VehicleForm(forms.ModelForm):
 
 
 class LoginForm(AuthenticationForm):
-    username = forms.CharField(
-        label="Usuario o correo",
+    username = InstitutionalEmailField(
+        label="Correo institucional",
         max_length=254,
-        widget=forms.TextInput(attrs={"autofocus": True, "autocomplete": "username"}),
+        widget=forms.EmailInput(
+            attrs={
+                "autofocus": True,
+                "autocomplete": "username",
+                "placeholder": "schinchillad502@ulacit.ed.cr",
+            }
+        ),
     )
 
 
 class ProfileForm(forms.ModelForm):
+    email = InstitutionalEmailField(label="Correo institucional")
+
     class Meta:
         model = get_user_model()
         fields = ["first_name", "last_name", "email"]
@@ -74,6 +98,8 @@ class UserProfileForm(forms.ModelForm):
 
 
 class AccountForm(forms.ModelForm):
+    username = forms.CharField(required=False, max_length=150, widget=forms.HiddenInput)
+    email = InstitutionalEmailField(label="Correo institucional")
     role = forms.ChoiceField(
         label="Rol",
         choices=[
@@ -120,9 +146,12 @@ class AccountForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance.pk:
             self.fields.pop("password")
+            self.fields["username"].disabled = True
 
     def clean(self):
         data = super().clean()
+        if not data.get("username") and data.get("email"):
+            data["username"] = data["email"]
         if not self.instance.pk:
             if not data.get("password"):
                 self.add_error("password", "La contraseña es obligatoria.")
@@ -173,8 +202,7 @@ class IntervalForm(forms.Form):
     def clean(self):
         data = super().clean()
         if data.get("starts_at") and data.get("ends_at"):
-            if data["starts_at"] >= data["ends_at"] or data["starts_at"] <= timezone.now():
-                raise forms.ValidationError("Selecciona un intervalo futuro válido.")
+            validate_booking_window(data["starts_at"], data["ends_at"])
         return data
 
 

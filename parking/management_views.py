@@ -11,13 +11,29 @@ from django.views.decorators.http import require_POST
 
 from .administration import PROFILE_FIELDS, AdministrationService
 from .forms import AccountForm, ParkingLotForm, PolicyForm
-from .models import ParkingLot, ParkingPolicy
+from .models import ParkingLot, ParkingPolicy, Reservation
 from .permissions import user_role
 
 
 def add_errors(form, error):
     for message in error.messages:
         form.add_error(None, message)
+
+
+@permission_required("parking.manage_operations", raise_exception=True)
+@never_cache
+def dashboard(request):
+    users = get_user_model().objects.filter(is_active=True)
+    return render(
+        request,
+        "parking/management/dashboard.html",
+        {
+            "active_users": users.count(),
+            "officers": users.filter(groups__name="Seguridad").count(),
+            "active_lots": ParkingLot.objects.filter(active=True).count(),
+            "inside": Reservation.objects.filter(status=Reservation.Status.INSIDE).count(),
+        },
+    )
 
 
 @permission_required("parking.manage_operations", raise_exception=True)

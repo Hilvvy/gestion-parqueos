@@ -1,6 +1,6 @@
 # Gestión de parqueos ULACIT
 
-Monolito Django para reservar espacios dentro del horario de clases, registrar ingresos y salidas y consultar la ocupación de tres parqueos. Integra vehículos, perfiles ampliados, materias semanales, confirmaciones con QR local, recomendación de parqueo, alertas de seguridad, cuenta regresiva, indicadores mensuales, administración propia, reportes y auditoría. La interfaz mantiene un diseño Material/Metro sencillo con acento morado.
+Monolito Django para reservar espacios dentro del horario de clases, registrar ingresos y salidas y consultar la ocupación de tres parqueos. Integra vehículos, perfiles ampliados, materias semanales, confirmaciones con QR local, recomendación de parqueo, alertas de seguridad, cuenta regresiva, indicadores mensuales, administración propia, reportes y auditoría. La interfaz usa una barra lateral Material/Metro morada; en móvil se abre con el botón Menú. El login permanece sin barra de navegación.
 
 ## Requisitos y ejecución
 
@@ -44,7 +44,7 @@ La cuenta `administrador` se crea como superusuario solo si no existía. El coma
 
 Repite `seed_demo` para cargar nuevos días cuando los horarios demo caduquen. También puedes registrar materias semanales en **Materias**, o hacerlo para otro usuario desde **Administración → Usuarios → Materias**. Se generan de 1 a 16 semanas de clases, conservando fecha y hora precisas para validar las reservas. Los horarios registrados por el propio estudiante se muestran como **Autodeclarados**; son datos del prototipo, no una integración ni verificación institucional.
 
-El acceso acepta usuario o correo. Los correos iniciales demo son `estudiante@parqueos.example`, `oficial@parqueos.example` y `administrador@parqueos.example` cuando la cuenta no tenía correo. No se envían mensajes. Si existe un correo duplicado en datos anteriores, el acceso por ese correo se rechaza; el usuario sigue pudiendo entrar con su nombre. Las pantallas propias evitan nuevos correos duplicados.
+El acceso exige correo institucional **@ulacit.ed.cr**; ya no acepta el identificador corto de usuario. Los correos iniciales demo son `schinchillad502@ulacit.ed.cr`, `seguridad.demo@ulacit.ed.cr` y `administracion.demo@ulacit.ed.cr` cuando la cuenta no tenía correo. No se envían mensajes. Si existe un correo duplicado en datos anteriores, el acceso por ese correo se rechaza; el usuario sigue pudiendo entrar con su nombre. Las pantallas propias exigen el dominio exacto y evitan correos duplicados. El ejemplo del estudiante corresponde a Steven Chinchilla Delgado; no se inventa el sufijo institucional de otras personas. Los correos de seguridad/administración son alias ficticios del entorno demo y no prueban identidad ni conectan con el SSO de ULACIT.
 
 Administración permite crear/editar usuarios, definir rol, cédula, nacimiento, carrera, jornada/horario del oficial y parqueos asignados, y activar/desactivar cuentas conservando el historial. Una cuenta desactivada pierde acceso a sus sesiones. Las contraseñas iniciales se validan con Django; editar datos no cambia la contraseña. Nadie puede desactivar su propia cuenta. Los administradores ordinarios no pueden modificar superusuarios. Para crear un superusuario adicional sigue disponible `python manage.py createsuperuser`.
 
@@ -55,7 +55,7 @@ Administración permite crear/editar usuarios, definir rol, cédula, nacimiento,
 3. Intentar otra reserva con la misma placa y franja para comprobar el rechazo, o cancelar antes del inicio.
 4. Para demostrar ingreso, reservar desde el próximo minuto y esperar. Entrar como oficial en otro navegador, buscar la placa o pegar el código completo, registrar ingreso y luego salida.
 5. Revisar la ocupación física: se actualiza cada cinco segundos sin recarga. Las reservas futuras no se cuentan como vehículos dentro.
-6. Entrar como administrador a Reportes, filtrar por placa, fechas y estado y exportar exactamente ese conjunto a CSV. En **Indicadores** elegir el mes y consultar totales, cancelaciones, parqueo más solicitado, hora de mayor demanda y estados. Revisar Auditoría para ver los eventos y sus responsables.
+6. Entrar como administrador a Reportes, filtrar por placa, fechas y estado y exportar exactamente ese conjunto a CSV o Excel (.xlsx). El Excel incluye fechas nativas de Costa Rica, tabla filtrable, encabezados fijos y datos de texto protegidos frente a fórmulas. En **Indicadores** elegir el mes y consultar totales, cancelaciones, parqueo más solicitado, hora de mayor demanda y estados. Revisar Auditoría para ver los eventos y sus responsables.
 7. En **Administración** crear/editar un usuario u oficial, asignarle parqueos y probar activar/desactivar. En Parqueos cambiar capacidad/estado; no se permiten cambios que dejen sin cupo las reservas comprometidas o los vehículos dentro. En Reglamento cambiar la tolerancia para las reservas nuevas.
 8. En Control de acceso consultar las alertas de llegadas dentro de los próximos 30 minutos y las citas pendientes dentro de su tolerancia. Se actualizan cada cinco segundos y solo incluyen los parqueos autorizados.
 
@@ -64,7 +64,7 @@ El QR contiene el código opaco de la reserva y se genera localmente con Segno, 
 ## Reglas acordadas para este incremento
 
 - Tres parqueos iniciales. Administración permite crear, editar o desactivar parqueos; las reservas y la disponibilidad solo usan los activos. No se elimina el historial.
-- Reservas futuras contenidas en uno de los horarios activos del usuario. Se puede indicar curso, trámite/cita o evento como motivo; todos conservan esa validación. No se imponen las ventanas de 12–72 horas ni las duraciones fijas de la demo de referencia.
+- Reservas futuras con **máximo 48 horas de anticipación al inicio**, contenidas en uno de los horarios activos del usuario. Se puede indicar curso, trámite/cita o evento como motivo; todos conservan esa validación. El límite se valida en formulario, recomendación y servicio transaccional; el inicio exactamente a 48 horas se acepta. No se impone un mínimo de anticipación ni las duraciones fijas de la demo.
 - Solo se permite reservar con un vehículo activo propio. Las placas se normalizan y no puede haber dos vehículos activos con la misma placa.
 - Se puede retirar un vehículo y registrar un reemplazo, incluso del mismo tipo. No se impone un máximo por tipo. Se impide el retiro cuando tiene reservas pendientes o permanece dentro.
 - Se puede cancelar antes del inicio, sin exigir una hora de anticipación.
@@ -84,7 +84,7 @@ El QR contiene el código opaco de la reserva y se genera localmente con Segno, 
 .\.venv\Scripts\python manage.py makemigrations --check --dry-run
 ```
 
-La suite actual incluye **116 pruebas**. GitHub Actions ejecuta los mismos controles en push y pull request. Las pruebas usan bases aisladas de los datos demo. Se incluyen reglas de horarios y capacidad, propiedad de vehículos, permisos, QR privado y cancelado, tolerancia y ausencia idempotente, historial/CSV, auditoría, migración de registros antiguos y dos solicitudes simultáneas por el último espacio, tanto con parqueo explícito como con asignación recomendada. También se prueban administración, perfiles ampliados, materias recurrentes, alertas, indicadores por mes local y el recorrido funcional completo.
+La suite incluye pruebas de correo institucional, límite de 48 horas y exportación Excel, además de las pruebas de los flujos principales. GitHub Actions ejecuta los mismos controles en push y pull request. Las pruebas usan bases aisladas de los datos demo. Se incluyen reglas de horarios y capacidad, propiedad de vehículos, permisos, QR privado y cancelado, tolerancia y ausencia idempotente, historial/CSV, auditoría, migración de registros antiguos y dos solicitudes simultáneas por el último espacio, tanto con parqueo explícito como con asignación recomendada. También se prueban administración, perfiles ampliados, materias recurrentes, alertas, indicadores por mes local y el recorrido funcional completo.
 
 La prueba concurrente usa dos conexiones sobre un archivo SQLite temporal en un proceso aislado: debe confirmar una sola solicitud y rechazar la otra por capacidad. Se usa `BEGIN IMMEDIATE` en transacciones breves para evitar la carrera entre consultar el cupo y asignarlo. No equivale a una prueba de carga o a validar otro motor de base de datos.
 
@@ -97,7 +97,9 @@ La prueba concurrente usa dos conexiones sobre un archivo SQLite temporal en un 
 - `parking/capacity.py`: cálculo compartido del máximo simultáneo por intervalos.
 - `parking/administration.py`: servicios de perfiles, usuarios, parqueos y materias.
 - `parking/management_views.py` y `subject_views.py`: pantallas administrativas y académicas.
-- `parking/authentication.py`: acceso por usuario o correo mediante el backend de Django.
+- `parking/authentication.py`: acceso por correo institucional mediante el backend de Django.
+- `parking/booking_rules.py`: límite común de anticipación de 48 horas.
+- `parking/excel_reports.py`: exportación XLSX nativa filtrada y con formato.
 - `parking/permissions.py`: roles y asignaciones de seguridad.
 - `parking/forms.py` y `views.py`: validación de entradas y coordinación HTTP.
 - `templates/` y `static/`: interfaz HTML/CSS/JavaScript adaptable.
@@ -110,7 +112,7 @@ Se conserva una sola app de dominio con separación por responsabilidades. Las f
 
 Respalda `db.sqlite3`, instala las dependencias y ejecuta `migrate`. La migración conserva las reservas, asigna un UUID diferente a cada una y establece su plazo de llegada inicial. Las reservas antiguas conservan su placa como dato histórico; no se les inventa un propietario de vehículo. Las reservas nuevas sí requieren un vehículo registrado. No se fabrican eventos de auditoría para operaciones anteriores a esta integración.
 
-Vuelve a ejecutar `seed_demo` en el entorno demo para agregar roles, asignaciones, cuenta administrativa y vehículo inicial. Los usuarios que solo tenían `is_staff` deben recibir grupo y parqueos explícitamente para operar la consola. Reinicia el servidor y el procesador. Después de actualizar el backend de acceso, vuelve a iniciar sesión.
+Vuelve a ejecutar `seed_demo` en el entorno demo para agregar roles, asignaciones, cuenta administrativa y vehículo inicial. Los usuarios que solo tenían `is_staff` deben recibir grupo y parqueos explícitamente para operar la consola. Reinicia el servidor y el procesador. Después de actualizar el backend de acceso, vuelve a iniciar sesión con el correo institucional. seed_demo cambia los antiguos correos demo @parqueos.example a los indicados arriba sin modificar contraseñas; otros correos anteriores deben actualizarse desde Administración.
 
 ## Paridad con la demo del equipo
 
