@@ -7,13 +7,15 @@ from .models import (
     ParkingPolicy,
     Reservation,
     SecurityAssignment,
+    Subject,
+    UserProfile,
     Vehicle,
 )
 
 admin.site.site_header = "Administración de parqueos"
-admin.site.register(ParkingLot)
 admin.site.register(ClassSchedule)
 admin.site.register(SecurityAssignment)
+admin.site.register(UserProfile)
 
 
 class ReadOnlyAdmin(admin.ModelAdmin):
@@ -25,6 +27,16 @@ class ReadOnlyAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(ParkingLot)
+class ParkingLotAdmin(ReadOnlyAdmin):
+    list_display = ("name", "capacity", "active")
+
+
+@admin.register(Subject)
+class SubjectAdmin(ReadOnlyAdmin):
+    list_display = ("name", "user", "weekday", "start_time", "end_time", "active")
 
 
 @admin.register(Reservation)

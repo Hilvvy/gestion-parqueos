@@ -158,3 +158,21 @@ dd { margin: 0; }
   .next-reservation { align-items: start; flex-direction: column; gap: 12px; }
   nav > a { min-height: 44px; }
 }
+
+.section-tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--line); margin: 0 0 28px; min-height: 44px; }
+.section-tabs a { min-height: 44px; padding: 10px 16px; }
+.row-actions { display: flex; gap: 16px; align-items: center; }
+.pagination { display: flex; justify-content: end; gap: 20px; margin-top: 20px; color: var(--muted); }
+.section-title { margin: 28px 0 12px; }
+.metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.metric-grid h2 { color: var(--muted); font-size: 13px; font-weight: 400; }
+.metric-grid strong { display: block; margin-top: 16px; font-size: 32px; font-weight: 400; }
+.metric-grid .metric-text { font-size: 20px; }
+.security-alerts { margin-bottom: 24px; }
+.security-alerts .section-heading { margin: 0 0 16px; }
+.alert-counts { display: flex; flex-wrap: wrap; gap: 24px; }
+.alert-counts strong { color: var(--primary); font-size: 24px; margin-right: 6px; font-weight: 400; }
+.security-alerts ul { margin: 12px 0 0; padding-left: 20px; color: var(--muted); font-size: 13px; }
+input[type="checkbox"] { width: 18px; min-height: 18px; height: 18px; accent-color: var(--primary); }
+label:has(input[type="checkbox"]) { display: flex; align-items: center; gap: 10px; }
+@media (max-width: 760px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } .section-tabs { flex-wrap: wrap; } }

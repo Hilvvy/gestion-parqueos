@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="heading"><h1>Indicadores mensuales</h1></div>
+<form class="search" method="get">{{ form.as_p }}<button>Consultar</button></form>
+{% if summary %}
+<section class="metric-grid"><article class="card"><h2>Reservas</h2><strong>{{ summary.total }}</strong></article><article class="card"><h2>Cancelaciones</h2><strong>{{ summary.cancelled }}</strong></article><article class="card"><h2>Más solicitado</h2><strong class="metric-text">{{ summary.top_lot }}</strong></article><article class="card"><h2>Mayor demanda</h2><strong>{{ summary.peak_hour }}</strong></article></section>
+<section class="card table-wrap"><table><thead><tr><th>Estado</th><th>Reservas</th></tr></thead><tbody>{% for state in summary.states %}<tr><td>{{ state.name }}</td><td>{{ state.count }}</td></tr>{% endfor %}</tbody></table></section>
+{% endif %}
+{% endblock %}

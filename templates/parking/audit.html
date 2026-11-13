@@ -5,7 +5,7 @@
   <thead><tr><th>Fecha</th><th>Acción</th><th>Usuario</th><th>Registro</th></tr></thead>
   <tbody>{% for event in events %}<tr>
     <td>{{ event.created_at|date:'d/m/Y H:i:s' }}</td><td>{{ event.get_action_display }}</td><td>{{ event.actor.username|default:'Sistema' }}</td>
-    <td>{% if event.reservation %}<a href="{% url 'reservation_detail' event.reservation.code %}">{{ event.reservation.plate }}</a>{% elif event.vehicle %}{{ event.vehicle.plate }}{% else %}—{% endif %}</td>
+    <td>{% if event.reservation %}<a href="{% url 'reservation_detail' event.reservation.code %}">{{ event.reservation.plate }}</a>{% elif event.vehicle %}{{ event.vehicle.plate }}{% elif event.subject_user %}{{ event.subject_user.username }}{% elif event.parking_lot %}{{ event.parking_lot.name }}{% else %}—{% endif %}</td>
   </tr>{% empty %}<tr><td colspan="4" class="empty">Sin eventos.</td></tr>{% endfor %}</tbody>
 </table></section>
 {% endblock %}

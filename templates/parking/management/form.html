@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block content %}
+<a class="back" href="{% url back_url %}">← Volver</a>
+<div class="heading"><h1>{{ title }}</h1></div>
+<section class="card reservation-form"><form method="post">{% csrf_token %}{{ form.as_p }}<div class="form-actions"><button>Guardar</button><a class="button secondary" href="{% url back_url %}">Cancelar</a></div></form></section>
+{% endblock %}

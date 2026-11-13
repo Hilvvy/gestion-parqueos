@@ -1,6 +1,6 @@
 # Gestión de parqueos ULACIT
 
-Monolito Django para reservar espacios dentro del horario de clases, registrar ingresos y salidas y consultar la ocupación de tres parqueos. Integra vehículos, perfiles, confirmaciones con QR local, permisos por parqueo, vencimiento de citas, reportes y auditoría. La interfaz mantiene un diseño Material/Metro sencillo con acento morado.
+Monolito Django para reservar espacios dentro del horario de clases, registrar ingresos y salidas y consultar la ocupación de tres parqueos. Integra vehículos, perfiles ampliados, materias semanales, confirmaciones con QR local, recomendación de parqueo, alertas de seguridad, cuenta regresiva, indicadores mensuales, administración propia, reportes y auditoría. La interfaz mantiene un diseño Material/Metro sencillo con acento morado.
 
 ## Requisitos y ejecución
 
@@ -38,35 +38,41 @@ También puedes usar dos terminales dentro del proyecto:
 | --- | --- |
 | estudiante | Vehículo DEMO123, perfil, siete días de horarios ficticios de 07:00 a 22:00 y reservas propias |
 | oficial | Grupo Seguridad y asignación a los tres parqueos demo |
-| administrador | Cuenta administrativa nueva con acceso al admin, reportes y auditoría |
+| administrador | Administración de usuarios/parqueos/reglamento dentro de la app, reportes, indicadores y auditoría |
 
 La cuenta `administrador` se crea como superusuario solo si no existía. El comando agrega los grupos correspondientes a las cuentas demo existentes. Está destinado al entorno académico local, no al aprovisionamiento de usuarios de una institución.
 
-Repite `seed_demo` para cargar nuevos días cuando los horarios caduquen. Para crear una cuenta administrativa distinta, ejecuta `python manage.py createsuperuser` con el entorno virtual activo. Los datos de clases se administran en `/admin/`; el estudiante no puede inventar horarios desde el formulario de reserva.
+Repite `seed_demo` para cargar nuevos días cuando los horarios demo caduquen. También puedes registrar materias semanales en **Materias**, o hacerlo para otro usuario desde **Administración → Usuarios → Materias**. Se generan de 1 a 16 semanas de clases, conservando fecha y hora precisas para validar las reservas. Los horarios registrados por el propio estudiante se muestran como **Autodeclarados**; son datos del prototipo, no una integración ni verificación institucional.
+
+El acceso acepta usuario o correo. Los correos iniciales demo son `estudiante@parqueos.example`, `oficial@parqueos.example` y `administrador@parqueos.example` cuando la cuenta no tenía correo. No se envían mensajes. Si existe un correo duplicado en datos anteriores, el acceso por ese correo se rechaza; el usuario sigue pudiendo entrar con su nombre. Las pantallas propias evitan nuevos correos duplicados.
+
+Administración permite crear/editar usuarios, definir rol, cédula, nacimiento, carrera, jornada/horario del oficial y parqueos asignados, y activar/desactivar cuentas conservando el historial. Una cuenta desactivada pierde acceso a sus sesiones. Las contraseñas iniciales se validan con Django; editar datos no cambia la contraseña. Nadie puede desactivar su propia cuenta. Los administradores ordinarios no pueden modificar superusuarios. Para crear un superusuario adicional sigue disponible `python manage.py createsuperuser`.
 
 ## Recorrido de demostración
 
 1. Entrar como estudiante y revisar Vehículos; registrar o retirar uno sin perder su historial.
-2. Reservar con un vehículo propio dentro de un horario de clases. Consultar el código y el QR de confirmación.
+2. Registrar una materia semanal si hace falta, reservar con un vehículo propio dentro de una de sus clases y dejar Parqueo en **Asignación recomendada**. Consultar el código y QR de confirmación y la cuenta regresiva de la próxima visita.
 3. Intentar otra reserva con la misma placa y franja para comprobar el rechazo, o cancelar antes del inicio.
 4. Para demostrar ingreso, reservar desde el próximo minuto y esperar. Entrar como oficial en otro navegador, buscar la placa o pegar el código completo, registrar ingreso y luego salida.
 5. Revisar la ocupación física: se actualiza cada cinco segundos sin recarga. Las reservas futuras no se cuentan como vehículos dentro.
-6. Entrar como administrador a Reportes, filtrar por placa, fechas y estado y exportar exactamente ese conjunto a CSV. Revisar Auditoría para ver los eventos y sus responsables.
+6. Entrar como administrador a Reportes, filtrar por placa, fechas y estado y exportar exactamente ese conjunto a CSV. En **Indicadores** elegir el mes y consultar totales, cancelaciones, parqueo más solicitado, hora de mayor demanda y estados. Revisar Auditoría para ver los eventos y sus responsables.
+7. En **Administración** crear/editar un usuario u oficial, asignarle parqueos y probar activar/desactivar. En Parqueos cambiar capacidad/estado; no se permiten cambios que dejen sin cupo las reservas comprometidas o los vehículos dentro. En Reglamento cambiar la tolerancia para las reservas nuevas.
+8. En Control de acceso consultar las alertas de llegadas dentro de los próximos 30 minutos y las citas pendientes dentro de su tolerancia. Se actualizan cada cinco segundos y solo incluyen los parqueos autorizados.
 
 El QR contiene el código opaco de la reserva y se genera localmente con Segno, sin enviar datos a servicios externos. Puede leerse con un lector QR y pegarse en la consola. No incluye un lector de cámara dentro del navegador. Código o QR por sí solos no permiten operar: la consola requiere autenticación y asignación al parqueo.
 
 ## Reglas acordadas para este incremento
 
-- Tres parqueos. Las capacidades se administran en Django.
-- Reservas futuras contenidas en uno de los horarios del usuario. No se imponen las ventanas de 12–72 horas ni las duraciones fijas de la demo de referencia.
+- Tres parqueos iniciales. Administración permite crear, editar o desactivar parqueos; las reservas y la disponibilidad solo usan los activos. No se elimina el historial.
+- Reservas futuras contenidas en uno de los horarios activos del usuario. Se puede indicar curso, trámite/cita o evento como motivo; todos conservan esa validación. No se imponen las ventanas de 12–72 horas ni las duraciones fijas de la demo de referencia.
 - Solo se permite reservar con un vehículo activo propio. Las placas se normalizan y no puede haber dos vehículos activos con la misma placa.
 - Se puede retirar un vehículo y registrar un reemplazo, incluso del mismo tipo. No se impone un máximo por tipo. Se impide el retiro cuando tiene reservas pendientes o permanece dentro.
 - Se puede cancelar antes del inicio, sin exigir una hora de anticipación.
-- La tolerancia de llegada es configurable en `/admin/parking/parkingpolicy/`; su valor inicial demo es 15 minutos. Cada reserva conserva el plazo establecido al crearla. Cambiar la política afecta las reservas nuevas.
+- La tolerancia de llegada es configurable en **Administración → Reglamento**; su valor inicial demo es 15 minutos. Cada reserva conserva el plazo establecido al crearla. Cambiar la política afecta las reservas nuevas.
 - Una cita sin ingreso pasa a Vencida al superar ese plazo o alcanzar su hora final. Su QR deja de emitirse y el código ya no permite ingreso. La inasistencia queda en auditoría y puede filtrarse en reportes.
 - Un ingreso anticipado, vencido, duplicado, de otro parqueo o con cupo físico agotado se rechaza. Un vehículo que excede su hora prevista sigue ocupando espacio hasta registrar su salida.
-- Solo el grupo Seguridad con asignaciones explícitas, o un superusuario, puede operar ingresos y salidas. `is_staff` por sí solo no concede ese acceso.
-- Reportes requiere `parking.view_operational_report`; Auditoría requiere `parking.view_auditevent`. El grupo Administración recibe ambos permisos. El superusuario administra capacidades, horarios, política, usuarios y asignaciones.
+- El grupo Seguridad opera sus parqueos asignados. Administración con permiso `parking.manage_operations` y los superusuarios pueden operar todos los parqueos activos. `is_staff` por sí solo no concede ese acceso.
+- Reportes requiere `parking.view_operational_report`; Auditoría requiere `parking.view_auditevent`. El grupo Administración recibe ambos permisos y `parking.manage_operations` para las pantallas propias. Seguridad no puede concederse ese permiso ni cambiar roles.
 
 ## Calidad
 
@@ -78,7 +84,7 @@ El QR contiene el código opaco de la reserva y se genera localmente con Segno, 
 .\.venv\Scripts\python manage.py makemigrations --check --dry-run
 ```
 
-GitHub Actions ejecuta los mismos controles en push y pull request. Las pruebas usan bases aisladas de los datos demo. Se incluyen reglas de horarios y capacidad, propiedad de vehículos, permisos, QR privado y cancelado, tolerancia y ausencia idempotente, historial/CSV, auditoría, migración de registros antiguos y dos solicitudes simultáneas por el último espacio.
+La suite actual incluye **116 pruebas**. GitHub Actions ejecuta los mismos controles en push y pull request. Las pruebas usan bases aisladas de los datos demo. Se incluyen reglas de horarios y capacidad, propiedad de vehículos, permisos, QR privado y cancelado, tolerancia y ausencia idempotente, historial/CSV, auditoría, migración de registros antiguos y dos solicitudes simultáneas por el último espacio, tanto con parqueo explícito como con asignación recomendada. También se prueban administración, perfiles ampliados, materias recurrentes, alertas, indicadores por mes local y el recorrido funcional completo.
 
 La prueba concurrente usa dos conexiones sobre un archivo SQLite temporal en un proceso aislado: debe confirmar una sola solicitud y rechazar la otra por capacidad. Se usa `BEGIN IMMEDIATE` en transacciones breves para evitar la carrera entre consultar el cupo y asignarlo. No equivale a una prueba de carga o a validar otro motor de base de datos.
 
@@ -87,7 +93,11 @@ La prueba concurrente usa dos conexiones sobre un archivo SQLite temporal en un 
 - `config/`: configuración y rutas del monolito.
 - `parking/models.py`: entidades y restricciones de integridad.
 - `parking/services.py`: reglas y transiciones de reservas y vehículos, con auditoría en la misma transacción.
-- `parking/queries.py`: consultas de visibilidad, ocupación e historial.
+- `parking/queries.py`: ocupación, recomendación, alertas, historial e indicadores.
+- `parking/capacity.py`: cálculo compartido del máximo simultáneo por intervalos.
+- `parking/administration.py`: servicios de perfiles, usuarios, parqueos y materias.
+- `parking/management_views.py` y `subject_views.py`: pantallas administrativas y académicas.
+- `parking/authentication.py`: acceso por usuario o correo mediante el backend de Django.
 - `parking/permissions.py`: roles y asignaciones de seguridad.
 - `parking/forms.py` y `views.py`: validación de entradas y coordinación HTTP.
 - `templates/` y `static/`: interfaz HTML/CSS/JavaScript adaptable.
@@ -100,7 +110,11 @@ Se conserva una sola app de dominio con separación por responsabilidades. Las f
 
 Respalda `db.sqlite3`, instala las dependencias y ejecuta `migrate`. La migración conserva las reservas, asigna un UUID diferente a cada una y establece su plazo de llegada inicial. Las reservas antiguas conservan su placa como dato histórico; no se les inventa un propietario de vehículo. Las reservas nuevas sí requieren un vehículo registrado. No se fabrican eventos de auditoría para operaciones anteriores a esta integración.
 
-Vuelve a ejecutar `seed_demo` en el entorno demo para agregar roles, asignaciones, cuenta administrativa y vehículo inicial. Los usuarios que solo tenían `is_staff` deben recibir grupo y parqueos explícitamente para operar la consola. Reinicia el servidor y el procesador.
+Vuelve a ejecutar `seed_demo` en el entorno demo para agregar roles, asignaciones, cuenta administrativa y vehículo inicial. Los usuarios que solo tenían `is_staff` deben recibir grupo y parqueos explícitamente para operar la consola. Reinicia el servidor y el procesador. Después de actualizar el backend de acceso, vuelve a iniciar sesión.
+
+## Paridad con la demo del equipo
+
+[La matriz de paridad](docs/paridad-demo.md) enumera las funciones trasladadas y las reglas que se adaptaron al proyecto acordado. Incluye todos los flujos funcionales de la demo recibida; no convierte los pendientes originales del backlog en funcionalidades terminadas.
 
 ## Estado frente al backlog y límites
 
@@ -117,7 +131,7 @@ Vuelve a ejecutar `seed_demo` en el entorno demo para agregar roles, asignacione
 | HU-07 | Historial por placa/fechas/estado, permisos, CSV y auditoría | Medición del objetivo de cinco segundos |
 | HU-08 | — | Operación sin conexión y sincronización |
 
-No incluye integración con horarios institucionales, hardware de acceso ni despliegue productivo. Los tiempos máximos de respuesta no se declaran medidos. Las reservas y los eventos son de solo lectura en el admin para no saltarse las reglas de los servicios.
+No incluye integración con horarios institucionales, hardware de acceso ni despliegue productivo. Los tiempos máximos de respuesta no se declaran medidos. Las reservas, los parqueos, las materias recurrentes, los vehículos y los eventos son de solo lectura en el admin de Django; las operaciones normales se realizan en las pantallas propias con sus servicios y auditoría.
 
 Variables opcionales: `DJANGO_DEBUG`, `DJANGO_SECRET_KEY`, `DJANGO_ALLOWED_HOSTS`, `PARKING_DATABASE_PATH`. `.env.example` documenta las opciones, pero no se carga automáticamente. `runserver` y la clave predeterminada son para desarrollo local.
 
