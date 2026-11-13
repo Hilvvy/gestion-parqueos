@@ -182,6 +182,15 @@ class ParkingPolicy(models.Model):
 
 
 class Reservation(models.Model):
+    class Kind(models.TextChoices):
+        REGULAR = "regular", "Regular"
+        VISITOR = "visitor", "Visitante"
+        EXCEPTION = "exception", "Ingreso excepcional"
+
+    kind = models.CharField(max_length=12, choices=Kind.choices, default=Kind.REGULAR)
+    guest_name = models.CharField("visitante", max_length=120, blank=True)
+    exception_reason = models.CharField("justificación", max_length=250, blank=True)
+
     class Purpose(models.TextChoices):
         CLASS = "class", "Curso presencial"
         APPOINTMENT = "appointment", "Trámite o cita"
@@ -278,3 +287,16 @@ class AuditEvent(models.Model):
 
     class Meta:
         ordering = ["-created_at", "-pk"]
+
+
+class OfflineMovement(models.Model):
+    """El UUID del dispositivo hace idempotentes los reintentos de sincronización."""
+
+    id = models.UUIDField(primary_key=True, editable=False)
+    officer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    reservation = models.ForeignKey(Reservation, on_delete=models.PROTECT)
+    action = models.CharField(max_length=5, choices=[("entry", "Ingreso"), ("exit", "Salida")])
+    occurred_at = models.DateTimeField()
+    received_at = models.DateTimeField(auto_now_add=True)
+    accepted = models.BooleanField(default=False)
+    error = models.CharField(max_length=250, blank=True)

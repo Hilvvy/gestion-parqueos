@@ -1,8 +1,14 @@
 from django.urls import path
 
-from . import management_views, subject_views, views
+from . import access_views, management_views, subject_views, views
 
 urlpatterns = [
+    path("service-worker.js", access_views.service_worker, name="service_worker"),
+    path("gestion/visitantes/nuevo/", access_views.visitor, name="visitor_create"),
+    path("acceso/excepcional/", access_views.exception_entry, name="exception_entry"),
+    path("acceso/contexto/", access_views.offline_context, name="offline_context"),
+    path("acceso/sincronizar/", access_views.sync_movement, name="sync_movement"),
+    path("acceso/dispositivo/", access_views.offline_shell, name="offline_shell"),
     path("", views.dashboard, name="dashboard"),
     path("reservar/", views.reserve, name="reserve"),
     path("recomendacion/", views.recommendation, name="recommendation"),

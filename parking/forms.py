@@ -215,6 +215,9 @@ class MonthForm(forms.Form):
 
 
 class ReportFilterForm(forms.Form):
+    kind = forms.ChoiceField(
+        label="Tipo", required=False, choices=[("", "Todos"), *Reservation.Kind.choices]
+    )
     plate = forms.CharField(label="Placa", required=False, max_length=12)
     date_from = forms.DateField(
         label="Desde", required=False, widget=forms.DateInput(attrs={"type": "date"})
@@ -232,3 +235,40 @@ class ReportFilterForm(forms.Form):
         if start and end and start > end:
             raise forms.ValidationError("La fecha final debe ser posterior o igual a la inicial.")
         return data
+
+
+class VisitorForm(IntervalForm):
+    starts_at = forms.DateTimeField(
+        label="Desde",
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
+        input_formats=["%Y-%m-%dT%H:%M"],
+    )
+    ends_at = forms.DateTimeField(
+        label="Hasta",
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
+        input_formats=["%Y-%m-%dT%H:%M"],
+    )
+    guest_name = forms.CharField(label="Nombre del visitante", max_length=120)
+    guest_plate = forms.CharField(label="Placa", max_length=12)
+    parking_lot = forms.ModelChoiceField(
+        label="Parqueo", queryset=ParkingLot.objects.filter(active=True)
+    )
+
+
+class ExceptionEntryForm(forms.Form):
+    plate = forms.CharField(label="Placa", max_length=12)
+    parking_lot = forms.ModelChoiceField(label="Parqueo", queryset=ParkingLot.objects.none())
+    reason = forms.CharField(
+        label="Justificación", max_length=250, widget=forms.Textarea(attrs={"rows": 2})
+    )
+    ends_at = forms.DateTimeField(
+        label="Salida prevista",
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local"}),
+        input_formats=["%Y-%m-%dT%H:%M"],
+    )
+
+    def __init__(self, *args, officer, **kwargs):
+        from .permissions import permitted_lots
+
+        super().__init__(*args, **kwargs)
+        self.fields["parking_lot"].queryset = permitted_lots(officer)

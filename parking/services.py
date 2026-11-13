@@ -8,7 +8,7 @@ from django.utils import timezone
 from .booking_rules import validate_booking_window
 from .capacity import peak_occupancy
 from .models import AuditEvent, ClassSchedule, ParkingLot, ParkingPolicy, Reservation, Vehicle
-from .permissions import permitted_lots
+from .permissions import can_manage, permitted_lots
 from .validators import normalize_plate
 
 
@@ -83,15 +83,32 @@ class ReservationService:
     @classmethod
     @transaction.atomic
     def reserve(
-        cls, *, user, parking_lot, vehicle, starts_at, ends_at, purpose=Reservation.Purpose.CLASS
+        cls,
+        *,
+        user,
+        parking_lot,
+        vehicle,
+        starts_at,
+        ends_at,
+        purpose=Reservation.Purpose.CLASS,
+        guest_name="",
+        guest_plate="",
     ):
         cls.expire_no_shows()
         if purpose not in Reservation.Purpose.values:
             raise ValidationError("Motivo de reserva inválido.")
         validate_booking_window(starts_at, ends_at)
-        if not ClassSchedule.objects.filter(
-            user=user, active=True, starts_at__lte=starts_at, ends_at__gte=ends_at
-        ).exists():
+        visitor = bool(guest_name or guest_plate)
+        if visitor and not can_manage(user):
+            raise ValidationError("Solo administración puede autorizar visitantes.")
+        if visitor and (not guest_name.strip() or len(guest_name.strip()) > 120):
+            raise ValidationError("Indica el nombre del visitante (máximo 120 caracteres).")
+        if (
+            not visitor
+            and not ClassSchedule.objects.filter(
+                user=user, active=True, starts_at__lte=starts_at, ends_at__gte=ends_at
+            ).exists()
+        ):
             raise ValidationError("La reserva debe estar dentro de uno de tus horarios de clases.")
         # SQLite usa BEGIN IMMEDIATE; la fila del parqueo también protege la asignación.
         if parking_lot is None:
@@ -105,13 +122,19 @@ class ReservationService:
         parking_lot = ParkingLot.objects.select_for_update().get(pk=parking_lot.pk)
         if not parking_lot.active:
             raise ValidationError("El parqueo no está disponible.")
-        vehicle = Vehicle.objects.filter(pk=vehicle.pk, owner=user, active=True).first()
-        if not vehicle:
-            raise ValidationError("Selecciona uno de tus vehículos activos.")
+        if visitor:
+            vehicle = None
+            plate = normalize_plate(guest_plate)
+            purpose = Reservation.Purpose.APPOINTMENT
+        else:
+            vehicle = Vehicle.objects.filter(pk=vehicle.pk, owner=user, active=True).first()
+            if not vehicle:
+                raise ValidationError("Selecciona uno de tus vehículos activos.")
+            plate = vehicle.plate
         overlapping = Reservation.objects.filter(
             status__in=cls.active_statuses, starts_at__lt=ends_at, ends_at__gt=starts_at
         )
-        if overlapping.filter(plate=vehicle.plate).exists():
+        if overlapping.filter(plate=plate).exists():
             raise ValidationError("Este vehículo ya tiene una reserva en ese horario.")
         intervals = overlapping.filter(parking_lot=parking_lot).values_list("starts_at", "ends_at")
         if peak_occupancy(intervals, starts_at, ends_at) >= parking_lot.capacity:
@@ -122,7 +145,9 @@ class ReservationService:
             user=user,
             parking_lot=parking_lot,
             vehicle=vehicle,
-            plate=vehicle.plate,
+            plate=plate,
+            kind=Reservation.Kind.VISITOR if visitor else Reservation.Kind.REGULAR,
+            guest_name=guest_name.strip(),
             purpose=purpose,
             starts_at=starts_at,
             ends_at=ends_at,
@@ -149,12 +174,13 @@ class ReservationService:
         )
 
     @classmethod
-    def check_in(cls, *, reservation_id, officer):
+    def check_in(cls, *, reservation_id, officer, occurred_at=None):
         if not permitted_lots(officer).exists():
             raise ValidationError(
                 "Solo el personal de seguridad asignado puede registrar ingresos."
             )
-        cls.expire_no_shows()
+        if occurred_at is None:
+            cls.expire_no_shows()
         with transaction.atomic():
             reservation = (
                 Reservation.objects.select_for_update()
@@ -163,10 +189,15 @@ class ReservationService:
             )
             if not permitted_lots(officer).filter(pk=reservation.parking_lot_id).exists():
                 raise ValidationError("No tienes asignado este parqueo.")
-            now = timezone.now()
+            now = occurred_at or timezone.now()
             deadline = reservation.entry_deadline or reservation.ends_at
             if (
-                reservation.status != Reservation.Status.CONFIRMED
+                reservation.status
+                not in (
+                    [Reservation.Status.CONFIRMED, Reservation.Status.EXPIRED]
+                    if occurred_at
+                    else [Reservation.Status.CONFIRMED]
+                )
                 or not reservation.starts_at <= now <= deadline
                 or now >= reservation.ends_at
             ):
@@ -195,7 +226,7 @@ class ReservationService:
 
     @staticmethod
     @transaction.atomic
-    def check_out(*, reservation_id, officer):
+    def check_out(*, reservation_id, officer, occurred_at=None):
         if not permitted_lots(officer).exists():
             raise ValidationError("Solo el personal de seguridad asignado puede registrar salidas.")
         reservation = Reservation.objects.select_for_update().get(pk=reservation_id)
@@ -203,10 +234,62 @@ class ReservationService:
             raise ValidationError("No tienes asignado este parqueo.")
         if reservation.status != Reservation.Status.INSIDE:
             raise ValidationError("Solo se puede registrar la salida de un vehículo en parqueo.")
+        if occurred_at and reservation.entered_at and occurred_at < reservation.entered_at:
+            raise ValidationError("La salida no puede ser anterior al ingreso.")
         reservation.status = Reservation.Status.COMPLETED
-        reservation.exited_at = timezone.now()
+        reservation.exited_at = occurred_at or timezone.now()
         reservation.exit_officer = officer
         reservation.save(update_fields=["status", "exited_at", "exit_officer"])
         AuditEvent.objects.create(
             actor=officer, reservation=reservation, action=AuditEvent.Action.EXITED
         )
+
+    @classmethod
+    @transaction.atomic
+    def admit_exception(cls, *, officer, parking_lot, plate, reason, ends_at):
+        now = timezone.now()
+        plate = normalize_plate(plate)
+        reason = reason.strip()
+        if not reason or len(reason) > 250:
+            raise ValidationError("Indica una justificación de hasta 250 caracteres.")
+        if not permitted_lots(officer).filter(pk=parking_lot.pk).exists():
+            raise ValidationError("No tienes asignado este parqueo.")
+        if not now < ends_at <= now + timedelta(hours=24):
+            raise ValidationError("La salida prevista debe estar dentro de las próximas 24 horas.")
+        ParkingLot.objects.filter(pk=parking_lot.pk).update(revision=F("revision") + 1)
+        lot = ParkingLot.objects.get(pk=parking_lot.pk)
+        if (
+            Reservation.objects.filter(plate=plate, status__in=cls.active_statuses)
+            .filter(Q(status=Reservation.Status.INSIDE) | Q(ends_at__gt=now, starts_at__lt=ends_at))
+            .exists()
+        ):
+            raise ValidationError("La placa ya tiene un ingreso o una reserva vigente.")
+        intervals = Reservation.objects.filter(
+            parking_lot=lot,
+            status__in=cls.active_statuses,
+            starts_at__lt=ends_at,
+            ends_at__gt=now,
+        ).values_list("starts_at", "ends_at")
+        inside = Reservation.objects.filter(
+            parking_lot=lot, status=Reservation.Status.INSIDE
+        ).count()
+        if inside >= lot.capacity or peak_occupancy(intervals, now, ends_at) >= lot.capacity:
+            raise ValidationError("No hay cupo disponible para el ingreso excepcional.")
+        reservation = Reservation.objects.create(
+            user=officer,
+            parking_lot=lot,
+            plate=plate,
+            kind=Reservation.Kind.EXCEPTION,
+            exception_reason=reason,
+            purpose=Reservation.Purpose.APPOINTMENT,
+            starts_at=now,
+            ends_at=ends_at,
+            status=Reservation.Status.INSIDE,
+            entered_at=now,
+            officer=officer,
+            entry_deadline=now,
+        )
+        AuditEvent.objects.create(
+            actor=officer, reservation=reservation, action=AuditEvent.Action.ENTERED
+        )
+        return reservation

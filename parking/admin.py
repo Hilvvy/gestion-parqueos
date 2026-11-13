@@ -3,6 +3,7 @@ from django.contrib import admin
 from .models import (
     AuditEvent,
     ClassSchedule,
+    OfflineMovement,
     ParkingLot,
     ParkingPolicy,
     Reservation,
@@ -42,7 +43,7 @@ class SubjectAdmin(ReadOnlyAdmin):
 @admin.register(Reservation)
 class ReservationAdmin(ReadOnlyAdmin):
     list_display = ("plate", "user", "parking_lot", "starts_at", "status")
-    list_filter = ("status", "parking_lot")
+    list_filter = ("status", "parking_lot", "kind")
     search_fields = ("plate", "user__username")
 
 
@@ -57,6 +58,21 @@ class VehicleAdmin(ReadOnlyAdmin):
 class AuditEventAdmin(ReadOnlyAdmin):
     list_display = ("created_at", "action", "actor", "reservation", "vehicle")
     list_filter = ("action",)
+
+
+@admin.register(OfflineMovement)
+class OfflineMovementAdmin(ReadOnlyAdmin):
+    list_display = (
+        "id",
+        "officer",
+        "reservation",
+        "action",
+        "occurred_at",
+        "received_at",
+        "accepted",
+        "error",
+    )
+    list_filter = ("accepted", "action")
 
 
 @admin.register(ParkingPolicy)

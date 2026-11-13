@@ -30,6 +30,7 @@ def reservation_workbook(reservations, filters):
                 ("date_from", "Desde"),
                 ("date_to", "Hasta"),
                 ("status", "Estado"),
+                ("kind", "Tipo"),
             ]
             if filters.get(key)
         )
@@ -51,6 +52,9 @@ def reservation_workbook(reservations, filters):
         "Oficial ingreso",
         "Salida",
         "Oficial salida",
+        "Tipo",
+        "Visitante",
+        "Justificación",
     ]
     sheet.append([])
     for column, header in enumerate(headers, 1):
@@ -63,7 +67,7 @@ def reservation_workbook(reservations, filters):
     def local_date(value):
         return timezone.localtime(value).replace(tzinfo=None) if value else None
 
-    widths = [39, 15, 38, 24, 22, 22, 22, 18, 22, 38, 22, 38]
+    widths = [39, 15, 38, 24, 22, 22, 22, 18, 22, 38, 22, 38, 24, 32, 48]
     for index, row in enumerate(reservations.iterator(), 6):
         values = [
             str(row.code),
@@ -78,6 +82,9 @@ def reservation_workbook(reservations, filters):
             row.officer.email if row.officer else "",
             local_date(row.exited_at),
             row.exit_officer.email if row.exit_officer else "",
+            row.get_kind_display(),
+            row.guest_name,
+            row.exception_reason,
         ]
         for column, value in enumerate(values, 1):
             cell = sheet.cell(index, column)
@@ -103,11 +110,11 @@ def reservation_workbook(reservations, filters):
             ),
         )
     if sheet.max_row >= 6:
-        table = Table(displayName="Reservas", ref=f"A5:L{sheet.max_row}")
+        table = Table(displayName="Reservas", ref=f"A5:O{sheet.max_row}")
         table.tableStyleInfo = TableStyleInfo(name="TableStyleMedium4", showRowStripes=True)
         sheet.add_table(table)
     else:
-        sheet.auto_filter.ref = "A5:L5"
+        sheet.auto_filter.ref = "A5:O5"
     for column, width in enumerate(widths, 1):
         sheet.column_dimensions[get_column_letter(column)].width = width
     sheet.freeze_panes = "C6"

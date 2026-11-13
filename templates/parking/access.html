@@ -1,6 +1,7 @@
 {% extends 'base.html' %}{% load static %}
 {% block content %}
-<div class="heading"><h1>Control de acceso</h1></div>
+<div class="heading"><h1>Control de acceso</h1><div class="row-actions">{% if can_manage %}<a class="button secondary" href="{% url 'visitor_create' %}">Cita de visitante</a>{% endif %}<a class="button secondary" href="{% url 'exception_entry' %}">Ingreso excepcional</a><a class="button" href="{% url 'offline_shell' %}">Movimientos del dispositivo</a></div></div>
+<p id="offline-state" role="status"></p>
 <p class="form-help">Parqueos asignados: {% for lot in assignments %}{{ lot.name }}{% if not forloop.last %}, {% endif %}{% empty %}ninguno{% endfor %}</p>
 <section class="card security-alerts" id="security-alerts" data-url="{% url 'alerts_data' %}"><div class="section-heading"><h2>Alertas de llegada</h2><small id="alerts-updated">{{ alerts.updated_at }}</small></div><div class="alert-counts"><span><strong id="upcoming-count">{{ alerts.upcoming_count }}</strong> en los próximos 30 min</span><span><strong id="pending-count">{{ alerts.pending_count }}</strong> pendientes de ingreso</span></div><ul id="arrival-list">{% for row in alerts.pending %}<li>{{ row.plate }} · {{ row.parking_lot }} · ingreso hasta {{ row.entry_deadline|date:'H:i' }}</li>{% endfor %}{% for row in alerts.upcoming %}<li>{{ row.plate }} · {{ row.parking_lot }} · llega {{ row.starts_at|date:'H:i' }}</li>{% endfor %}</ul></section>
 <form class="search" method="get"><label for="search">Placa o código</label><input id="search" name="search" value="{{ search }}"><button>Buscar</button><a href="{% url 'access' %}">Ver todas</a></form>
@@ -15,4 +16,4 @@
 </table></div>
 {% endblock %}
 
-{% block scripts %}<script src="{% static 'parking/security-alerts.js' %}" defer></script>{% endblock %}
+{% block scripts %}<script src="{% static 'parking/security-alerts.js' %}" defer></script><script src="{% static 'parking/offline-store.js' %}" defer></script><script src="{% static 'parking/offline.js' %}" defer></script>{% endblock %}

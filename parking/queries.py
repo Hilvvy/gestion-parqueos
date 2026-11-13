@@ -35,6 +35,8 @@ def visible_reservations(user):
 
 
 def filter_report(reservations, data):
+    if data.get("kind"):
+        reservations = reservations.filter(kind=data["kind"])
     if data.get("plate"):
         reservations = reservations.filter(plate__icontains=data["plate"].strip().upper())
     if data.get("date_from"):
