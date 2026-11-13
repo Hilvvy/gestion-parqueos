@@ -7,7 +7,7 @@
   <title>{% block title %}Parqueos ULACIT{% endblock %}</title>
   <link rel="icon" type="image/png" href="{% static 'parking/logo.png' %}">
   <link rel="apple-touch-icon" href="{% static 'parking/logo.png' %}">
-  <link rel="stylesheet" href="{% static 'parking/style.css' %}?v=7">
+  <link rel="stylesheet" href="{% static 'parking/style.css' %}?v=8">
 </head>
 <body class="{% if user.is_authenticated and request.resolver_match.url_name != 'login' %}with-sidebar{% endif %}">
   {% block topbar %}
