@@ -9,7 +9,7 @@
   <link rel="apple-touch-icon" href="{% static 'parking/logo.png' %}">
   <link rel="stylesheet" href="{% static 'parking/style.css' %}?v=8">
 </head>
-<body class="{% if user.is_authenticated and request.resolver_match.url_name != 'login' %}with-sidebar{% endif %}">
+<body class="{% block body_class %}{% if user.is_authenticated and request.resolver_match.url_name != 'login' %}with-sidebar{% endif %}{% endblock %}">
   {% block topbar %}
   {% if user.is_authenticated %}
   <button class="mobile-nav-toggle" id="navigation-toggle" type="button" aria-expanded="false" aria-controls="app-sidebar">☰ Menú</button>

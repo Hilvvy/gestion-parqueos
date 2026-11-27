@@ -1,8 +1,15 @@
 from django.urls import path
 
-from . import access_views, management_views, subject_views, views
+from . import access_views, confirmation, management_views, password_views, subject_views, views
 
 urlpatterns = [
+    path("confirmacion/<uuid:code>/", confirmation.public_confirmation, name="public_confirmation"),
+    path("clave/", password_views.password_change, name="password_change"),
+    path(
+        "gestion/usuarios/<int:pk>/clave/",
+        password_views.password_reset,
+        name="manage_password_reset",
+    ),
     path("service-worker.js", access_views.service_worker, name="service_worker"),
     path("gestion/visitantes/nuevo/", access_views.visitor, name="visitor_create"),
     path("acceso/excepcional/", access_views.exception_entry, name="exception_entry"),

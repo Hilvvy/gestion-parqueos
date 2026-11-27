@@ -1,17 +1,18 @@
 # Flujos de la demo integrados en Django
 
-Referencia funcional: ParqueoU_Demo_v3/ParqueoU_Demo_v1 del equipo. Se mantiene un único monolito Django y el diseño Material/Metro morado. Esta matriz distingue funcionalidades incorporadas de reglas adaptadas; no declara completados todos los requisitos del proyecto final.
+Referencias funcionales: ParqueoU_Demo_v3/ParqueoU_Demo_v1 y ParqueoU_Demo_v4/ParqueoU_Demo_v1 del equipo. Se mantiene un único monolito Django y el diseño Material/Metro morado. Esta matriz distingue funcionalidades incorporadas de reglas adaptadas; no declara completados todos los requisitos del proyecto final.
 
 | Función de la demo | Implementación grupal |
 | --- | --- |
 | Acceso y roles | Correo institucional @ulacit.ed.cr, contraseña protegida, sesiones y CSRF de Django; Estudiante, Seguridad y Administración |
+| Recuperación de clave (v4) | Restablecimiento administrativo de estudiantes/Seguridad, invalidación de sesiones, cambio obligatorio y auditoría sin contraseñas; cambio propio desde Mi perfil |
 | Perfil personal y académico | Nombre, apellidos, correo, cédula, nacimiento y carrera. La cédula registrada se cambia por Administración |
 | Perfil del oficial | Jornada, hora inicial/final y parqueos asignados. Admite jornada nocturna que termina al día siguiente |
 | Vehículos | Tipo, placa, marca, modelo y año; registro/retiro, propiedad, historial y reemplazo sin bloquear por registros inactivos |
 | Materias y horarios | Registro semanal de 1–16 semanas por estudiante o administrador; fechas concretas, fuente autodeclarada identificada, retiro sin borrar historia |
 | Solicitud de reserva | Vehículo propio, motivo de curso/trámite/evento, inicio y fin dentro de clases activas; validación de traslapes y cupo |
 | Recomendación de parqueo | Mayor número de cupos libres para la franja. Consulta visual y asignación final dentro de la transacción |
-| Confirmación | Código UUID, QR local, detalle y cancelación; código inválido al cancelar, vencer o haber ingresado |
+| Confirmación | Código UUID, QR local con URL de confirmación pública (v4), placa parcial sin identidad personal, detalle privado y cancelación; no permite ingresar al cancelar, vencer o haber ingresado |
 | Historial del estudiante | Reservas conservadas con estados y detalle |
 | Próxima visita | Fecha, parqueo, placa, límite de ingreso y cuenta regresiva actualizada cada segundo |
 | Seguridad | Búsqueda por placa/código, detalle autorizado, ingreso/salida, hora y oficial, rechazo fuera de horario/tolerancia y con parqueo lleno |
@@ -35,7 +36,7 @@ Referencia funcional: ParqueoU_Demo_v3/ParqueoU_Demo_v1 del equipo. Se mantiene 
 - Tolerancia inicial demo de 15 minutos, editable por Administración.
 - Los horarios autodeclarados permiten demostrar el flujo del compañero. No equivalen a horarios institucionales verificados.
 
-La demo recibida solo incluía una tabla y un mensaje para lista de espera, sin flujo implementado; no se declara esa funcionalidad como existente. Ninguna de las dos versiones incluye lector de cámara, acceso sin conexión con sincronización, visitantes autorizados ni hardware. En el proyecto grupal siguen pendientes además Docker/SQL Server y mediciones de rendimiento.
+Las demos recibidas solo incluyen una tabla y un mensaje para lista de espera, sin flujo implementado; no se declara esa funcionalidad como existente. La v4 no implementa operación sin conexión, visitantes autorizados ni ingreso excepcional; el proyecto grupal sí los integra desde el PR #20, con mediciones locales documentadas. Ninguna versión incluye lector de cámara ni hardware. Docker/SQL Server y los diagramas/ADR siguen pendientes (TT-01 y TT-02).
 
 Las pruebas cubren el recorrido estudiante → materia → vehículo → reserva recomendada → QR → ingreso/salida → reportes y auditoría, además de permisos, validaciones, migración y concurrencia.
 

@@ -1,9 +1,24 @@
 import re
+from urllib.parse import urlsplit
+from uuid import UUID
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
 INSTITUTIONAL_DOMAIN = "ulacit.ed.cr"
+
+
+def reservation_code(value):
+    """Acepta el UUID original o la dirección de confirmación del QR, sin abrir enlaces."""
+    value = value.strip()
+    try:
+        return UUID(value)
+    except ValueError:
+        url = urlsplit(value)
+        parts = url.path.strip("/").split("/")
+        if url.scheme not in ("", "http", "https") or len(parts) != 2 or parts[0] != "confirmacion":
+            raise ValueError("Código de reserva inválido.") from None
+        return UUID(parts[1])
 
 
 def institutional_email(value):

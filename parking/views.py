@@ -1,6 +1,5 @@
 import csv
 import io
-from uuid import UUID
 
 import segno
 from django.contrib import messages
@@ -10,6 +9,7 @@ from django.db import IntegrityError, OperationalError
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
@@ -36,6 +36,7 @@ from .queries import (
     visible_reservations,
 )
 from .services import ReservationService, VehicleService
+from .validators import reservation_code
 
 
 @login_required
@@ -120,7 +121,10 @@ def reservation_qr(request, code):
     ):
         return HttpResponse("Código no disponible.", status=410, content_type="text/plain")
     output = io.BytesIO()
-    segno.make(str(reservation.code), micro=False).save(output, kind="svg", scale=5)
+    confirmation_url = request.build_absolute_uri(
+        reverse("public_confirmation", args=[reservation.code])
+    )
+    segno.make(confirmation_url, micro=False).save(output, kind="svg", scale=5)
     return HttpResponse(output.getvalue(), content_type="image/svg+xml")
 
 
@@ -133,7 +137,7 @@ def access_console(request):
     if query:
         match = Q(plate__icontains=query.upper())
         try:
-            match |= Q(code=UUID(query))
+            match |= Q(code=reservation_code(query))
         except ValueError:
             pass
         reservations = reservations.filter(match)

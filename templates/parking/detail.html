@@ -24,6 +24,7 @@
   <div class="confirmation-code">
     {% if qr_available %}<img src="{% url 'reservation_qr' reservation.code %}" alt="QR de la reserva" width="220" height="220">{% endif %}
     <label for="reservation-code">Código de reserva</label><input id="reservation-code" readonly value="{{ reservation.code }}">
+    <a class="button secondary" href="{% url 'public_confirmation' reservation.code %}" target="_blank" rel="noopener noreferrer">Abrir confirmación web</a>
   </div>
 </section>
 {% endblock %}
