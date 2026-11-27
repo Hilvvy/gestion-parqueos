@@ -17,7 +17,7 @@
       {% if reservation.entered_at %}<dt>Ingreso</dt><dd>{{ reservation.entered_at|date:'d/m/Y H:i' }}</dd>{% endif %}
       {% if reservation.exited_at %}<dt>Salida</dt><dd>{{ reservation.exited_at|date:'d/m/Y H:i' }}</dd>{% endif %}
     </dl>
-    {% if reservation.user_id == user.id and reservation.status == 'confirmed' %}
+    {% if reservation.user_id == user.id and reservation.can_cancel %}
     <form method="post" action="{% url 'cancel' reservation.pk %}">{% csrf_token %}<button class="secondary">Cancelar reserva</button></form>
     {% endif %}
   </div>

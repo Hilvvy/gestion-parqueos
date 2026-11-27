@@ -95,13 +95,19 @@ def sync_movement(request):
         return JsonResponse({"error": "Inicia sesión como oficial."}, status=403)
     try:
         payload = json.loads(request.body)
+        queue_owner = int(payload["user"])
         event_id, code = UUID(payload["id"]), UUID(payload["code"])
         action = payload["action"]
         occurred_at = parse_datetime(payload["occurred_at"])
         if action not in ("entry", "exit") or not occurred_at or timezone.is_naive(occurred_at):
             raise ValueError
-    except (ValueError, KeyError, TypeError, AttributeError):
+    except (ValueError, KeyError, TypeError, AttributeError, OverflowError):
         return JsonResponse({"error": "Movimiento inválido."}, status=400)
+    if queue_owner != request.user.pk:
+        return JsonResponse(
+            {"error": "La cola pertenece a otra cuenta. Inicia sesión con la cuenta original."},
+            status=403,
+        )
     try:
         event = OfflineMovementService.synchronize(
             officer=request.user,

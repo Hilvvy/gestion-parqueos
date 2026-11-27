@@ -48,7 +48,7 @@
 <td>
 <span class="badge {{ reservation.status }}">{{ reservation.get_status_display }}</span>
 </td>
-<td>{% if reservation.status == 'confirmed' %}<form method="post" action="{% url 'cancel' reservation.pk %}">{% csrf_token %}<button class="quiet">Cancelar</button>
+<td>{% if reservation.can_cancel %}<form method="post" action="{% url 'cancel' reservation.pk %}">{% csrf_token %}<button class="quiet">Cancelar</button>
 </form>{% else %}—{% endif %}</td>
 </tr>{% empty %}<tr>
 <td colspan="4" class="empty">No tienes reservas.</td>

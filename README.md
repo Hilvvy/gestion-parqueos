@@ -71,6 +71,8 @@ En **Mi perfil → Cambiar contraseña**, cualquier cuenta puede cambiar su prop
 
 [La comparación con la v4](docs/comparacion-demo-v4.md) detalla qué se integró y cómo se verificó.
 
+[La revisión funcional](docs/revision-funcional.md) registra correcciones de horarios, cola local, sesiones y recorridos completos de navegador. La tolerancia configurable exige al menos un minuto.
+
 ## Reglas acordadas para este incremento
 
 - Tres parqueos iniciales. Administración permite crear, editar o desactivar parqueos; las reservas y la disponibilidad solo usan los activos. No se elimina el historial.
