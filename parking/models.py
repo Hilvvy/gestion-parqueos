@@ -171,7 +171,7 @@ class SecurityAssignment(models.Model):
 
 class ParkingPolicy(models.Model):
     arrival_tolerance_minutes = models.PositiveSmallIntegerField(
-        "tolerancia de llegada en minutos", default=15
+        "tolerancia de llegada en minutos", default=15, validators=[MinValueValidator(1)]
     )
 
     def save(self, *args, **kwargs):
@@ -250,6 +250,23 @@ class Reservation(models.Model):
 
     def __str__(self):
         return f"{self.plate} · {self.parking_lot}"
+
+    @property
+    def can_cancel(self):
+        return self.status == self.Status.CONFIRMED and self.starts_at > timezone.now()
+
+    @property
+    def entry_window_open(self):
+        now = timezone.now()
+        return (
+            self.status == self.Status.CONFIRMED
+            and self.starts_at <= now <= (self.entry_deadline or self.ends_at)
+            and now < self.ends_at
+        )
+
+    @property
+    def is_upcoming(self):
+        return self.starts_at > timezone.now()
 
 
 class AuditEvent(models.Model):

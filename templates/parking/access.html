@@ -11,7 +11,7 @@
     <td><a href="{% url 'reservation_detail' reservation.code %}">{{ reservation.plate }}</a><br><small>{{ reservation.user.username }}</small></td>
     <td>{{ reservation.parking_lot }}</td><td>{{ reservation.starts_at|date:'d/m H:i' }} – {{ reservation.ends_at|date:'H:i' }}<br><small>Ingreso hasta {{ reservation.entry_deadline|date:'H:i' }}</small></td>
     <td><span class="badge {{ reservation.status }}">{{ reservation.get_status_display }}</span></td>
-    <td><form method="post" action="{% if reservation.status == 'confirmed' %}{% url 'movement' reservation.pk 'entry' %}{% else %}{% url 'movement' reservation.pk 'exit' %}{% endif %}">{% csrf_token %}<button>{% if reservation.status == 'confirmed' %}Ingreso{% else %}Salida{% endif %}</button></form></td>
+    <td>{% if reservation.status == 'inside' %}<form method="post" action="{% url 'movement' reservation.pk 'exit' %}">{% csrf_token %}<button>Salida</button></form>{% elif reservation.entry_window_open %}<form method="post" action="{% url 'movement' reservation.pk 'entry' %}">{% csrf_token %}<button>Ingreso</button></form>{% elif reservation.is_upcoming %}<small>Ingreso desde {{ reservation.starts_at|date:'d/m H:i' }}</small>{% else %}<small>Plazo vencido</small>{% endif %}</td>
   </tr>{% empty %}<tr><td colspan="5" class="empty">Sin reservas activas.</td></tr>{% endfor %}</tbody>
 </table></div>
 {% endblock %}

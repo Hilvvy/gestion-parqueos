@@ -219,7 +219,8 @@ class ReservationService:
             reservation.status = Reservation.Status.INSIDE
             reservation.entered_at = now
             reservation.officer = officer
-            reservation.save(update_fields=["status", "entered_at", "officer"])
+            reservation.expired_at = None
+            reservation.save(update_fields=["status", "entered_at", "officer", "expired_at"])
             AuditEvent.objects.create(
                 actor=officer, reservation=reservation, action=AuditEvent.Action.ENTERED
             )
@@ -247,6 +248,7 @@ class ReservationService:
     @classmethod
     @transaction.atomic
     def admit_exception(cls, *, officer, parking_lot, plate, reason, ends_at):
+        cls.expire_no_shows()
         now = timezone.now()
         plate = normalize_plate(plate)
         reason = reason.strip()

@@ -51,6 +51,7 @@ def dashboard(request):
             "next_reservation": reservations.filter(
                 status=Reservation.Status.CONFIRMED, ends_at__gt=timezone.now()
             )
+            .filter(Q(entry_deadline__gte=timezone.now()) | Q(entry_deadline__isnull=True))
             .order_by("starts_at")
             .first(),
             "schedules": ClassSchedule.objects.filter(
@@ -396,5 +397,7 @@ def report_excel(request):
 @permission_required("parking.view_auditevent", raise_exception=True)
 @never_cache
 def audit_log(request):
-    events = AuditEvent.objects.select_related("actor", "reservation", "vehicle")[:100]
+    events = AuditEvent.objects.select_related(
+        "actor", "reservation", "vehicle", "subject_user", "parking_lot"
+    )[:100]
     return render(request, "parking/audit.html", {"events": events})

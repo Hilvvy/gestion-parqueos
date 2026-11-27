@@ -49,6 +49,9 @@ def main():
             password="AdminBrowser2026!",
             is_superuser=True,
         )
+        student = get_user_model().objects.create_user(
+            "browser-student", email="student-browser@ulacit.ed.cr", password="StudentBrowser2026!"
+        )
         lot = ParkingLot.objects.create(name="Prueba", capacity=2)
         SecurityAssignment.objects.create(officer=officer, parking_lot=lot)
         now = timezone.now()
@@ -102,6 +105,59 @@ def main():
                     sleep(0.2)
             with sync_playwright() as playwright:
                 browser = playwright.chromium.launch(channel="chrome", headless=True)
+                student_context = browser.new_context()
+                student_page = student_context.new_page()
+                student_page.goto(base + "/login/")
+                student_page.locator('[name="username"]').fill(student.email)
+                student_page.locator('[name="password"]').fill("StudentBrowser2026!")
+                student_page.get_by_role("button", name="Ingresar", exact=True).click()
+                student_page.wait_for_url(base + "/")
+                student_page.goto(base + "/vehiculos/")
+                student_page.locator('[name="plate"]').fill("JNY987")
+                student_page.locator('[name="kind"]').select_option("car")
+                student_page.locator('[name="brand"]').fill("Toyota")
+                student_page.locator('[name="model"]').fill("Yaris")
+                student_page.locator('[name="year"]').fill("2022")
+                student_page.get_by_role("button", name="Registrar", exact=True).click()
+                expect(student_page.get_by_text("JNY987", exact=True)).to_be_visible()
+                tomorrow = timezone.localtime(now + timedelta(days=1)).replace(
+                    hour=10, minute=0, second=0, microsecond=0
+                )
+                student_page.goto(base + "/materias/")
+                student_page.locator('[name="name"]').fill("Calidad browser")
+                student_page.locator('[name="weekday"]').select_option(str(tomorrow.weekday()))
+                student_page.locator('[name="first_date"]').fill(tomorrow.date().isoformat())
+                student_page.locator('[name="start_time"]').fill("10:00")
+                student_page.locator('[name="end_time"]').fill("12:00")
+                student_page.locator('[name="weeks"]').fill("1")
+                student_page.get_by_role("button", name="Registrar", exact=True).click()
+                expect(student_page.locator("tbody")).to_contain_text("Calidad browser")
+                student_page.goto(base + "/reservar/")
+                student_page.locator('[name="vehicle"]').select_option(index=1)
+                student_page.locator('[name="starts_at"]').fill(
+                    (tomorrow + timedelta(minutes=15)).strftime("%Y-%m-%dT%H:%M")
+                )
+                student_page.locator('[name="ends_at"]').fill(
+                    (tomorrow + timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M")
+                )
+                student_page.get_by_role("button", name="Confirmar reserva", exact=True).click()
+                student_page.wait_for_url("**/reservas/*/")
+                expect(student_page.locator(".confirmation-data")).to_contain_text("JNY987")
+                expect(student_page.locator(".confirmation-code img")).to_be_visible()
+                student_page.get_by_role("button", name="Cancelar reserva", exact=True).click()
+                student_page.wait_for_url(base + "/")
+                expect(student_page.locator("tbody")).to_contain_text("Cancelada")
+                student_page.goto(base + "/vehiculos/")
+                student_page.get_by_role("button", name="Retirar", exact=True).click()
+                expect(student_page.locator("tbody")).to_contain_text("No tienes vehículos")
+                student_page.goto(base + "/materias/")
+                student_page.get_by_role("button", name="Retirar", exact=True).click()
+                expect(student_page.locator("tbody")).to_contain_text("Sin materias")
+                student_page.set_viewport_size({"width": 375, "height": 812})
+                student_page.get_by_role("button", name="Menú", exact=False).click()
+                student_page.get_by_role("link", name="Mi perfil", exact=True).click()
+                student_page.wait_for_url(base + "/perfil/")
+                assert student_page.evaluate("document.documentElement.scrollWidth <= innerWidth")
                 context = browser.new_context()
                 page = context.new_page()
                 page.goto(base + "/login/")
@@ -124,6 +180,8 @@ def main():
                 expect(page.locator("#offline-pending")).to_contain_text("OFF123")
                 page.get_by_role("button", name="Salida", exact=True).click()
                 expect(page.locator("#offline-pending li")).to_have_count(2)
+                expect(page.get_by_role("button", name="Salida", exact=True)).to_have_count(0)
+                expect(page.locator("#offline-rows")).to_contain_text("Salida pendiente")
                 assert database_state()["events"] == 0
                 context.set_offline(False)
                 expect(page.locator("#offline-pending")).not_to_contain_text(
@@ -164,6 +222,9 @@ def main():
                 admin_page.locator('[name="new_password2"]').fill("TemporalBrowser2026!")
                 admin_page.get_by_role("button", name="Restablecer contraseña", exact=True).click()
                 admin_page.wait_for_url(base + "/gestion/usuarios/")
+                page.evaluate("window.dispatchEvent(new Event('online'))")
+                expect(page.locator("#offline-account")).to_be_empty()
+                expect(page.locator("#offline-pending li")).to_have_count(0)
                 page.goto(base + "/perfil/")
                 page.wait_for_url("**/login/?next=**")
                 page.locator('[name="username"]').fill(officer.email)
@@ -182,6 +243,21 @@ def main():
                 expect(
                     page.get_by_role("link", name="Cambiar contraseña", exact=True)
                 ).to_be_visible()
+                for path in (
+                    "/gestion/",
+                    "/gestion/usuarios/",
+                    "/gestion/parqueos/",
+                    "/gestion/reglamento/",
+                    "/reportes/",
+                    "/indicadores/",
+                    "/auditoria/",
+                ):
+                    assert admin_page.goto(base + path).status == 200
+                assert admin_context.request.get(base + "/reportes.xlsx").status == 200
+                admin_console = admin_context.new_page()
+                admin_console.goto(base + "/acceso/dispositivo/")
+                expect(admin_console.locator("#offline-account")).to_contain_text(admin.email)
+                admin_page.goto(base + "/gestion/usuarios/")
                 screenshot_directory = ROOT / ".local"
                 screenshot_directory.mkdir(exist_ok=True)
                 public.screenshot(
@@ -190,9 +266,13 @@ def main():
                 admin_page.screenshot(
                     path=str(screenshot_directory / "v4-accounts.png"), full_page=True
                 )
+                admin_page.get_by_role("button", name="Cerrar sesión", exact=True).click()
+                admin_page.wait_for_url(base + "/login/")
+                expect(admin_console.locator("#offline-account")).to_be_empty()
+                expect(admin_console.locator("#offline-rows tr")).to_have_count(0)
                 browser.close()
             print(
-                "OK: Chrome sin red y sincronización; confirmación pública; restablecimiento, sesión revocada y cambio obligatorio."
+                "OK: estudiante, vehículo, materia, reserva/cancelación y móvil; paneles/reportes; offline en orden; sesiones y logout entre pestañas; QR y contraseñas."
             )
         finally:
             process.terminate()

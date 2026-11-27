@@ -52,6 +52,7 @@ def event(row, **kwargs):
 
 
 def send(client, payload):
+    payload = {"user": int(client.session.get("_auth_user_id", 0)), **payload}
     return client.post(
         reverse("sync_movement"), json.dumps(payload), content_type="application/json"
     )
@@ -209,11 +210,13 @@ def test_offline_delayed_sync_after_expiry(scenario, client):
     captured = timezone.now() - timedelta(minutes=2)
     row.entry_deadline = timezone.now() - timedelta(minutes=1)
     row.status = Reservation.Status.EXPIRED
+    row.expired_at = timezone.now()
     row.save()
     client.force_login(scenario["officer"])
     assert send(client, event(row, occurred_at=captured.isoformat())).json()["accepted"]
     row.refresh_from_db()
     assert row.status == "inside"
+    assert row.expired_at is None
 
 
 def test_offline_scope_and_auth(scenario, client):

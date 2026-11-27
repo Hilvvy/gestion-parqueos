@@ -27,13 +27,17 @@ globalThis.ParkingStore = class ParkingStore {
         const {csrf, ...safe} = value;
         return this.transaction('context', store => store.put(safe, 'current'), true);
     }
-    events() { return this.transaction('events', store => store.getAll()); }
+    clearContext() { return this.transaction('context', store => store.delete('current'), true); }
+    events() { return this.transaction('events', store => store.getAll()).then(orderParkingEvents); }
     put(event) { return this.transaction('events', store => store.put(event), true); }
     remove(id) { return this.transaction('events', store => store.delete(id), true); }
 };
 
+globalThis.orderParkingEvents = events => [...events].sort((a, b) => a.occurred_at.localeCompare(b.occurred_at) || Number(a.action === 'exit') - Number(b.action === 'exit'));
+globalThis.parkingPendingStatus = (reservation, events) => orderParkingEvents(events.filter(event => event.code === reservation.code && !event.result)).reduce((status, event) => event.action === 'entry' ? 'inside' : 'completed', reservation.status);
+
 globalThis.syncParkingEvents = async function(events, user, send, save) {
-    for (const event of events.filter(row => row.user === user && !row.result).sort((a, b) => a.occurred_at.localeCompare(b.occurred_at))) {
+    for (const event of orderParkingEvents(events.filter(row => row.user === user && !row.result))) {
         const response = await send(event);
         if (response.status === 404 || response.status === 409) {
             const result = await response.json();

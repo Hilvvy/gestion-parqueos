@@ -32,3 +32,23 @@ test('revocación de permiso queda visible y no bloquea la cola', async () => {
     await syncParkingEvents([event('revoked')], 1, async () => ({ok: false, status: 404, json: async () => ({error: 'Parqueo no asignado'})}), async row => saved.push(row));
     assert.equal(saved[0].result, 'Conflicto: Parqueo no asignado');
 });
+
+test('la vista pendiente sigue el tiempo, aunque IndexedDB devuelva UUID en otro orden', () => {
+    const reservation = {code: 'reservation', status: 'confirmed'};
+    const entry = {...event('z-entry'), code: reservation.code, action: 'entry'};
+    const exit = {...event('a-exit', 1, '2026-11-12T20:01:00Z'), code: reservation.code, action: 'exit'};
+    assert.equal(parkingPendingStatus(reservation, [exit, entry]), 'completed');
+    assert.deepEqual(orderParkingEvents([exit, entry]).map(row => row.id), ['z-entry', 'a-exit']);
+});
+test('en un empate de hora se procesa ingreso antes que salida', async () => {
+    const saved = [];
+    const entry = {...event('z-entry'), action: 'entry'}, exit = {...event('a-exit'), action: 'exit'};
+    await syncParkingEvents([exit, entry], 1, async row => { saved.push(row.action); return response(true); }, async () => {});
+    assert.deepEqual(saved, ['entry', 'exit']);
+});
+test('la vista local no aplica movimientos rechazados ni de otra reserva', () => {
+    assert.equal(parkingPendingStatus({code: 'one', status: 'confirmed'}, [
+        {...event('rejected'), code: 'one', action: 'entry', result: 'Conflicto'},
+        {...event('other'), code: 'two', action: 'exit'}
+    ]), 'confirmed');
+});
