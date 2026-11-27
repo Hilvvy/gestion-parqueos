@@ -103,3 +103,19 @@ def test_zero_tolerance_does_not_make_arrival_impossible(db):
         AdministrationService.save_policy(actor=manager(), minutes=0)
     policy.refresh_from_db()
     assert policy.arrival_tolerance_minutes == 15
+
+
+def test_online_exit_cannot_precede_a_clock_skewed_offline_entry(scenario):
+    row = active_reservation(scenario)
+    captured_at = timezone.now() + timedelta(seconds=30)
+    ReservationService.check_in(
+        reservation_id=row.pk, officer=scenario["officer"], occurred_at=captured_at
+    )
+    with pytest.raises(ValidationError, match="anterior"):
+        ReservationService.check_out(reservation_id=row.pk, officer=scenario["officer"])
+    row.refresh_from_db()
+    assert row.status == "inside" and row.exited_at is None
+    with patch("parking.services.timezone.now", return_value=captured_at + timedelta(seconds=1)):
+        ReservationService.check_out(reservation_id=row.pk, officer=scenario["officer"])
+    row.refresh_from_db()
+    assert row.status == "completed" and row.exited_at >= row.entered_at

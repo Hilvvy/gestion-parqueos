@@ -235,10 +235,11 @@ class ReservationService:
             raise ValidationError("No tienes asignado este parqueo.")
         if reservation.status != Reservation.Status.INSIDE:
             raise ValidationError("Solo se puede registrar la salida de un vehículo en parqueo.")
-        if occurred_at and reservation.entered_at and occurred_at < reservation.entered_at:
+        exited_at = occurred_at or timezone.now()
+        if reservation.entered_at and exited_at < reservation.entered_at:
             raise ValidationError("La salida no puede ser anterior al ingreso.")
         reservation.status = Reservation.Status.COMPLETED
-        reservation.exited_at = occurred_at or timezone.now()
+        reservation.exited_at = exited_at
         reservation.exit_officer = officer
         reservation.save(update_fields=["status", "exited_at", "exit_officer"])
         AuditEvent.objects.create(
