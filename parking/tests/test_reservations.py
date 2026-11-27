@@ -199,7 +199,10 @@ def test_http_entry_updates_availability_and_exit_releases_it(client, scenario):
         response = client.post(f"/acceso/{reservation.pk}/entry/")
     assert response.status_code == 302
     assert client.get("/disponibilidad/").json()["lots"][0]["free"] == 0
-    assert client.post(f"/acceso/{reservation.pk}/exit/").status_code == 302
+    with patch(
+        "parking.services.timezone.now", return_value=scenario["starts_at"] + timedelta(hours=1)
+    ):
+        assert client.post(f"/acceso/{reservation.pk}/exit/").status_code == 302
     assert client.get("/disponibilidad/").json()["lots"][0]["free"] == 1
 
 
