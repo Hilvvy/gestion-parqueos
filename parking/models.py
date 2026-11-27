@@ -39,6 +39,7 @@ class UserProfile(models.Model):
     shift = models.CharField("jornada", choices=Shift.choices, max_length=10, blank=True)
     work_start = models.TimeField("inicio de jornada", null=True, blank=True)
     work_end = models.TimeField("fin de jornada", null=True, blank=True)
+    must_change_password = models.BooleanField(default=False, editable=False)
 
     class Meta:
         permissions = [("manage_operations", "Puede administrar usuarios y parqueos")]
@@ -268,6 +269,8 @@ class AuditEvent(models.Model):
         SUBJECT_ADDED = "subject_added", "Materia registrada"
         SUBJECT_RETIRED = "subject_retired", "Materia retirada"
         POLICY_UPDATED = "policy_updated", "Reglamento actualizado"
+        PASSWORD_RESET = "password_reset", "Contraseña restablecida"
+        PASSWORD_CHANGED = "password_changed", "Contraseña cambiada"
 
     actor = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True

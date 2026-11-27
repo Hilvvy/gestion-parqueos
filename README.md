@@ -59,7 +59,17 @@ Administración permite crear/editar usuarios, definir rol, cédula, nacimiento,
 7. En **Administración** crear/editar un usuario u oficial, asignarle parqueos y probar activar/desactivar. En Parqueos cambiar capacidad/estado; no se permiten cambios que dejen sin cupo las reservas comprometidas o los vehículos dentro. En Reglamento cambiar la tolerancia para las reservas nuevas.
 8. En Control de acceso consultar las alertas de llegadas dentro de los próximos 30 minutos y las citas pendientes dentro de su tolerancia. Se actualizan cada cinco segundos y solo incluyen los parqueos autorizados.
 
-El QR contiene el código opaco de la reserva y se genera localmente con Segno, sin enviar datos a servicios externos. Puede leerse con un lector QR y pegarse en la consola. No incluye un lector de cámara dentro del navegador. Código o QR por sí solos no permiten operar: la consola requiere autenticación y asignación al parqueo.
+El QR contiene una dirección de confirmación con el UUID opaco de la reserva y se genera localmente con Segno, sin enviar datos a servicios externos. Al abrirla se muestran estado, parqueo, horario y placa parcial; no nombre, correo, cédula ni datos del visitante. Seguridad puede pegar la dirección o el UUID original en la consola, también en Movimientos del dispositivo. No incluye un lector de cámara dentro del navegador. Consultar la confirmación no registra el ingreso: la operación requiere autenticación y asignación al parqueo.
+
+Para abrir el QR desde un teléfono, accede a la app con la IP o dominio que ese teléfono pueda alcanzar antes de generar el QR. Configura ese host en `DJANGO_ALLOWED_HOSTS`; un QR generado desde `127.0.0.1` apunta al mismo dispositivo que lo escanea.
+
+## Contraseñas y recuperación administrativa
+
+En **Administración → Usuarios → Restablecer clave**, Administración puede asignar y confirmar una clave temporal a estudiantes o Seguridad. Se aplican los validadores de contraseña de Django. El cambio invalida las sesiones previas y exige sustituir la clave temporal antes de usar las demás pantallas o API. La persona debe conocer su clave temporal para cambiarla; Administración la comunica directamente, no se envía correo automático ni se registra la clave en auditoría.
+
+En **Mi perfil → Cambiar contraseña**, cualquier cuenta puede cambiar su propia clave con la actual y confirmar la nueva. La sesión actual continúa y las demás quedan invalidadas. Las cuentas administrativas no se restablecen mediante el flujo destinado a estudiantes y Seguridad. No se modificaron los correos ni contraseñas demo existentes al incorporar estos flujos.
+
+[La comparación con la v4](docs/comparacion-demo-v4.md) detalla qué se integró y cómo se verificó.
 
 ## Reglas acordadas para este incremento
 

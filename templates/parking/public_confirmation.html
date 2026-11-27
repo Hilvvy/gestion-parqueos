@@ -1,0 +1,11 @@
+{% load static %}<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Confirmación de reserva</title><link rel="icon" href="{% static 'parking/logo.png' %}"><link rel="stylesheet" href="{% static 'parking/style.css' %}?v=8"></head>
+<body><main><section class="card login">
+<div class="brand login-brand"><img class="logo" src="{% static 'parking/logo.png' %}" alt="" width="36" height="36">Parqueos <small>ULACIT</small></div>
+<h1>Confirmación de reserva</h1>
+{% if found %}<p class="badge">{{ status_label }}</p>
+<dl><dt>Parqueo</dt><dd>{{ parking_lot }}</dd><dt>Horario</dt><dd>{{ starts_at|date:'d/m/Y H:i' }} – {{ ends_at|date:'d/m/Y H:i' }}</dd><dt>Placa protegida</dt><dd>{{ masked_plate }}</dd>{% if pending %}<dt>Límite de ingreso</dt><dd>{{ deadline|date:'d/m/Y H:i' }}</dd>{% endif %}</dl>
+<label for="public-code">Código</label><input id="public-code" readonly value="{{ code }}">
+<p class="form-help">Seguridad debe validar el ingreso desde su consola.</p>
+{% else %}<p>No se encontró esta reserva.</p>{% endif %}
+</section></main></body></html>

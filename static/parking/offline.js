@@ -16,7 +16,9 @@
             item.textContent = `${event.plate} · ${event.action === 'entry' ? 'Ingreso' : 'Salida'} · ${new Date(event.occurred_at).toLocaleString('es-CR')} · ${event.result || 'Pendiente'}`;
             pending.append(item);
         }
-        const query = document.getElementById('offline-search').value.trim().toUpperCase();
+        let query = document.getElementById('offline-search').value.trim().toUpperCase();
+        const confirmationCode = query.match(/\/CONFIRMACION\/([0-9A-F-]{36})\/?(?:[?#].*)?$/);
+        if (confirmationCode) query = confirmationCode[1];
         const body = document.getElementById('offline-rows'); body.replaceChildren();
         for (const original of context.rows.filter(row => !query || row.plate.includes(query) || row.code.toUpperCase() === query)) {
             const row = {...original};

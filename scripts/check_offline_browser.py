@@ -43,6 +43,12 @@ def main():
             "browser", email="browser@ulacit.ed.cr", password="BrowserTest2026!"
         )
         officer.groups.add(Group.objects.get_or_create(name=SECURITY_GROUP)[0])
+        admin = get_user_model().objects.create_user(
+            "browser-admin",
+            email="admin-browser@ulacit.ed.cr",
+            password="AdminBrowser2026!",
+            is_superuser=True,
+        )
         lot = ParkingLot.objects.create(name="Prueba", capacity=2)
         SecurityAssignment.objects.create(officer=officer, parking_lot=lot)
         now = timezone.now()
@@ -139,9 +145,54 @@ def main():
                 expect(
                     page.get_by_role("heading", name="Movimientos del dispositivo")
                 ).to_be_visible()
+                context.set_offline(False)
+                public_context = browser.new_context()
+                public = public_context.new_page()
+                public.goto(base + f"/confirmacion/{row.code}/")
+                expect(public.get_by_text("Finalizada", exact=True)).to_be_visible()
+                expect(public.get_by_text("***123", exact=True)).to_be_visible()
+                assert "OFF123" not in public.content() and officer.email not in public.content()
+                assert public.locator("#app-sidebar").count() == 0
+                admin_context = browser.new_context()
+                admin_page = admin_context.new_page()
+                admin_page.goto(base + "/login/")
+                admin_page.locator('[name="username"]').fill(admin.email)
+                admin_page.locator('[name="password"]').fill("AdminBrowser2026!")
+                admin_page.get_by_role("button", name="Ingresar", exact=True).click()
+                admin_page.goto(base + f"/gestion/usuarios/{officer.pk}/clave/")
+                admin_page.locator('[name="new_password1"]').fill("TemporalBrowser2026!")
+                admin_page.locator('[name="new_password2"]').fill("TemporalBrowser2026!")
+                admin_page.get_by_role("button", name="Restablecer contraseña", exact=True).click()
+                admin_page.wait_for_url(base + "/gestion/usuarios/")
+                page.goto(base + "/perfil/")
+                page.wait_for_url("**/login/?next=**")
+                page.locator('[name="username"]').fill(officer.email)
+                page.locator('[name="password"]').fill("TemporalBrowser2026!")
+                page.get_by_role("button", name="Ingresar", exact=True).click()
+                page.wait_for_url(base + "/clave/")
+                assert page.locator("#app-sidebar").count() == 0
+                page.goto(base + "/reservar/")
+                page.wait_for_url(base + "/clave/")
+                page.locator('[name="old_password"]').fill("TemporalBrowser2026!")
+                page.locator('[name="new_password1"]').fill("PersonalBrowser2026!")
+                page.locator('[name="new_password2"]').fill("PersonalBrowser2026!")
+                page.get_by_role("button", name="Guardar contraseña", exact=True).click()
+                page.wait_for_url(base + "/")
+                page.goto(base + "/perfil/")
+                expect(
+                    page.get_by_role("link", name="Cambiar contraseña", exact=True)
+                ).to_be_visible()
+                screenshot_directory = ROOT / ".local"
+                screenshot_directory.mkdir(exist_ok=True)
+                public.screenshot(
+                    path=str(screenshot_directory / "v4-public-confirmation.png"), full_page=True
+                )
+                admin_page.screenshot(
+                    path=str(screenshot_directory / "v4-accounts.png"), full_page=True
+                )
                 browser.close()
             print(
-                "OK: Chrome sin red, recarga, ingreso/salida persistentes, reconexión automática y sin duplicados."
+                "OK: Chrome sin red y sincronización; confirmación pública; restablecimiento, sesión revocada y cambio obligatorio."
             )
         finally:
             process.terminate()

@@ -12,7 +12,7 @@ from django.views.decorators.http import require_POST
 from .administration import PROFILE_FIELDS, AdministrationService
 from .forms import AccountForm, ParkingLotForm, PolicyForm
 from .models import ParkingLot, ParkingPolicy, Reservation
-from .permissions import user_role
+from .permissions import can_manage, user_role
 
 
 def add_errors(form, error):
@@ -57,6 +57,9 @@ def accounts(request):
     labels = {"student": "Estudiante", "security": "Seguridad", "administrator": "Administración"}
     for user in page:
         user.role_label = labels[user_role(user)]
+        user.can_reset_password = not (
+            user.is_superuser or can_manage(user) or user_role(user) == "administrator"
+        )
     return render(request, "parking/management/accounts.html", {"page": page, "query": query})
 
 
